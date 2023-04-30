@@ -13,10 +13,6 @@ class MultiHierFLTrainer(FedAvgAPI):
     def __init__(self, args, device, comm=None, model_trainer=None):
         super().__init__(args, device, comm, model_trainer)
         self.args = args
-        self.device = device
-        self.comm = comm
-        self.model_trainer = model_trainer
-        self.model = model_trainer.model
         self.group_dict = None
         self.group_indexes = None
         self.client_list = None

@@ -24,7 +24,36 @@ class Cloud(HierarchicalTrainer):
                 self.args.client_num_in_total,
                 self.args.client_num_per_round,
             )
-            
+            #train each group
+            w_groups_dict = {}
+            for group_idx in sorted(group_to_client_indexes.keys()):
+                sampled_client_indexes = group_to_client_indexes[group_idx]
+                group = self.group_dict[group_idx]
+                w_group_list = group.train(
+                    global_round_idx, w_global, sampled_client_indexes
+                )
+                for global_epoch, w in w_group_list:
+                    if not global_epoch in w_groups_dict:
+                        w_groups_dict[global_epoch] = []
+                    w_groups_dict[global_epoch].append(
+                        (group.get_sample_number(sampled_client_indexes), w)
+                    )
+            # aggregate group weights into the global weight
+            for global_epoch in sorted(w_groups_dict.keys()):
+                w_groups = w_groups_dict[global_epoch]
+                w_global = self._aggregate(w_groups)
+
+                # evaluate performance
+                if (
+                        global_epoch % self.args.frequency_of_the_test == 0
+                        or global_epoch
+                        == self.args.comm_round
+                        * self.args.group_comm_round
+                        * self.args.epochs
+                        - 1
+                ):
+                    self.model.load_state_dict(w_global)
+                    self._local_test_on_all_clients(global_epoch)
 
 
     def _client_sampling(self, global_round_idx, group_list, client_num_per_round):
