@@ -43,7 +43,6 @@ class MultiHierFLTrainer():
 
         self.group_dict = None
         self.group_indexes = None
-        self.client_list = None
         
         self._setup_federations(self.args.federation_num)
         self._setup_clients_for_MHFL(
@@ -51,7 +50,7 @@ class MultiHierFLTrainer():
             self.train_data_local_dict,
             self.test_data_local_dict,
         )
-        self._setup_groups_for_MHFL(self)
+        self._setup_groups_for_MHFL()
         
     # resign all client to corresponding groups
     def _setup_clients_for_MHFL(
@@ -103,15 +102,18 @@ class MultiHierFLTrainer():
     def _setup_groups_for_MHFL(self):
         logging.info("############setup_groups_for_MHFL (START)#############")
         # reassign groups to the corresponding clouds
-        group_index_list = self.group_dict.keys()
+        group_index_list = list(self.group_dict.keys())
         cloud_to_group = {}
         # shuffle the group index
         np.random.shuffle(group_index_list)
         total_cloud_number = len(self.federation_list)
         # reassign group indexes
+        tmp_group_index_list = []
         for list_idx, group_index in enumerate(group_index_list):
             cloud_index = list_idx % total_cloud_number
-            cloud_to_group[cloud_index] = group_index
+            if not cloud_index in cloud_to_group:
+                cloud_to_group[cloud_index] = []
+            cloud_to_group[cloud_index].append(group_index)
         # reassign group objective
         for cloud_idx, cloud_list in cloud_to_group.items():
             group_temp_list = []
@@ -119,6 +121,7 @@ class MultiHierFLTrainer():
                 group_temp_list.append(self.group_dict[group_idx])
             tmp_cloud = self.federation_list[cloud_idx]
             tmp_cloud.set_group_list(group_temp_list)
+            tmp_cloud.set_group_indexes(group_temp_list)
         logging.info("############setup_groups_for_MHFL (END)#############")
 
     # setting up federations in our simulation
@@ -126,7 +129,7 @@ class MultiHierFLTrainer():
         logging.info("############setup_federations_for_MHFL (START)#############")
         list_of_federation = []
         for i in range(federation_num):
-            list_of_federation.append(Cloud(self.args, self.device, self.model, self.model_trainer))
+            list_of_federation.append(Cloud(self.args, self.device, self.model, self.model_trainer,self.client_list))
         self.federation_list = list_of_federation
         logging.info("############setup_federations_for_MHFL (END)#############")
 

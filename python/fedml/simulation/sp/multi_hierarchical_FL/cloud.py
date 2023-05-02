@@ -5,11 +5,22 @@ from ..hierarchical_fl.trainer import HierarchicalTrainer
 
 
 class Cloud(HierarchicalTrainer):
-    def __init__(self, args, device, dataset, model):
-        super().__init__(args, device, dataset, model)
+    def __init__(self, args, device, model, model_trainer,client_list):
+        self.args = args
+        self.device = device
+        self.model = model
+        self.model_trainer = model_trainer
         self.group_list = None
+        self.group_indexes = None
+        self.client_list = client_list
     def set_group_list(self, group_list=list):
         self.group_list = group_list
+    def set_group_indexes(self, group_object_list=list):
+        client_to_group_indexes = {}
+        for group in group_object_list:
+            for client in group.client_dict.keys():
+                client_to_group_indexes[client] = group.idx
+        self.group_indexes = client_to_group_indexes
 
     def train(self):
         w_global = self.model.state_dict()
@@ -21,14 +32,13 @@ class Cloud(HierarchicalTrainer):
             )
             group_to_client_indexes = self._client_sampling(
                 global_round_idx,
-                self.args.client_num_in_total,
+                self.group_list,
                 self.args.client_num_per_round,
             )
             #train each group
             w_groups_dict = {}
-            for group_idx in sorted(group_to_client_indexes.keys()):
-                sampled_client_indexes = group_to_client_indexes[group_idx]
-                group = self.group_dict[group_idx]
+            for group in self.group_list:
+                sampled_client_indexes = [client for client in group_to_client_indexes if client in group.client_dict.keys()]
                 w_group_list = group.train(
                     global_round_idx, w_global, sampled_client_indexes
                 )
@@ -64,9 +74,9 @@ class Cloud(HierarchicalTrainer):
         if total_canadiate_client == client_num_per_round:
             client_indexes = [client_index for client_index in range(total_canadiate_client)]
         else:
-            num_clients = min(client_num_per_round, total_canadiate_client)
+            num_clients = min(client_num_per_round, len(total_canadiate_client))
             np.random.seed(global_round_idx)  # make sure for each comparison, we are selecting the same clients each round
-            client_indexes = np.random.choice(range(total_canadiate_client), num_clients, replace=False)
+            client_indexes = np.random.choice(total_canadiate_client, num_clients, replace=False)
         logging.info("client_indexes = %s" % str(client_indexes))
         
         group_to_client_indexes = {}
