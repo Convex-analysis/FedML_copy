@@ -6,28 +6,58 @@ from .client import HFLClient
 from .cloud import Cloud
 from .group import Group
 from ..fedavg.fedavg_api import FedAvgAPI
+from fedml.ml.trainer.trainer_creator import create_model_trainer
 
 
 # 利用这个traininer初始化所有的HFLtrainer，分配客户端和数据
-class MultiHierFLTrainer(FedAvgAPI):
-    def __init__(self, args, device, comm=None, model_trainer=None):
-        super().__init__(args, device, comm, model_trainer)
+class MultiHierFLTrainer():
+    def __init__(self, args, device, dataset, model):
+        self.device = device
         self.args = args
+        [
+            train_data_num,
+            test_data_num,
+            train_data_global,
+            test_data_global,
+            train_data_local_num_dict,
+            train_data_local_dict,
+            test_data_local_dict,
+            class_num,
+        ] = dataset
+
+        self.train_global = train_data_global
+        self.test_global = test_data_global
+        self.val_global = None
+        self.train_data_num_in_total = train_data_num
+        self.test_data_num_in_total = test_data_num
+        
+        self.client_list = []
+        self.train_data_local_num_dict = train_data_local_num_dict
+        self.train_data_local_dict = train_data_local_dict
+        self.test_data_local_dict = test_data_local_dict
+
+        logging.info("model = {}".format(model))
+        self.model_trainer = create_model_trainer(model, args)
+        self.model = model
+        logging.info("self.model_trainer = {}".format(self.model_trainer))
+
         self.group_dict = None
         self.group_indexes = None
         self.client_list = None
+        
+        self._setup_federations(self.args.federation_num)
         self._setup_clients_for_MHFL(
             self.train_data_local_num_dict,
             self.train_data_local_dict,
             self.test_data_local_dict,
         )
-        self.federation_list = self._setup_federations(self.args.federation_num)
-
+        self._setup_groups_for_MHFL(self)
+        
     # resign all client to corresponding groups
     def _setup_clients_for_MHFL(
             self, train_data_local_num_dict, train_data_local_dict, test_data_local_dict
     ):
-        logging.info("############setup_clients (START)#############")
+        logging.info("############setup_clients_for_MHFL (START)#############")
         if self.args.group_method == "random":
             self.group_indexes = np.random.randint(
                 0, self.args.group_num, self.args.client_num_in_total
@@ -68,9 +98,10 @@ class MultiHierFLTrainer(FedAvgAPI):
                 self.model_trainer
             )
         ]
-        logging.info("############setup_clients (END)#############")
+        logging.info("############setup_clients_for_MHFL (END)#############")
 
     def _setup_groups_for_MHFL(self):
+        logging.info("############setup_groups_for_MHFL (START)#############")
         # reassign groups to the corresponding clouds
         group_index_list = self.group_dict.keys()
         cloud_to_group = {}
@@ -88,13 +119,16 @@ class MultiHierFLTrainer(FedAvgAPI):
                 group_temp_list.append(self.group_dict[group_idx])
             tmp_cloud = self.federation_list[cloud_idx]
             tmp_cloud.set_group_list(group_temp_list)
+        logging.info("############setup_groups_for_MHFL (END)#############")
 
     # setting up federations in our simulation
     def _setup_federations(self, federation_num):
+        logging.info("############setup_federations_for_MHFL (START)#############")
         list_of_federation = []
         for i in range(federation_num):
             list_of_federation.append(Cloud(self.args, self.device, self.model, self.model_trainer))
-        return list_of_federation
+        self.federation_list = list_of_federation
+        logging.info("############setup_federations_for_MHFL (END)#############")
 
     def train(self):
         for hfl in self.federation_list:
