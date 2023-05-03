@@ -1,11 +1,18 @@
+import numpy
 import logging
 import numpy as np
+import torch
+import wandb
+import copy
+from fedml import mlops
+
 from .group import Group
 from ..hierarchical_fl.trainer import HierarchicalTrainer
 
 
 class Cloud(HierarchicalTrainer):
-    def __init__(self, args, device, model, model_trainer,client_list):
+    def __init__(self,idx, args, device, model, model_trainer,client_list):
+        self.idx = idx
         self.args = args
         self.device = device
         self.model = model
@@ -13,6 +20,9 @@ class Cloud(HierarchicalTrainer):
         self.group_list = None
         self.group_indexes = None
         self.client_list = client_list
+        self.test_data_local_dict = None
+        self.train_data_local_num_dict = None
+        self.train_data_local_dict = None
     def set_group_list(self, group_list=list):
         self.group_list = group_list
     def set_group_indexes(self, group_object_list=list):
@@ -37,7 +47,9 @@ class Cloud(HierarchicalTrainer):
             )
             #train each group
             w_groups_dict = {}
+            train_order = []
             for group in self.group_list:
+                train_order.append(group.idx)
                 sampled_client_indexes = [client for client in group_to_client_indexes if client in group.client_dict.keys()]
                 w_group_list = group.train(
                     global_round_idx, w_global, sampled_client_indexes
@@ -52,6 +64,8 @@ class Cloud(HierarchicalTrainer):
             for global_epoch in sorted(w_groups_dict.keys()):
                 w_groups = w_groups_dict[global_epoch]
                 w_global = self._aggregate(w_groups)
+                #measure the difference from w_global and each group model
+                self._get_model_diff(w_global, w_groups, train_order)
 
                 # evaluate performance
                 if (
@@ -150,8 +164,44 @@ class Cloud(HierarchicalTrainer):
         mlops.log({"Test/Acc": test_acc, "round": round_idx})
         mlops.log({"Test/Loss": test_loss, "round": round_idx})
         logging.info(stats)
-            
 
+    def set_test_data_dict(self, test_data_local_dict):
+        self.test_data_local_dict = test_data_local_dict
+
+    def set_train_data_local_num_dict(self, train_data_local_num_dict):
+        self.train_data_local_num_dict = train_data_local_num_dict
+
+    def set_train_data_local_dict(self, train_data_local_dict):
+        self.train_data_local_dict = train_data_local_dict
+
+    def _get_model_diff(self, w_global, w_groups, train_order):
+        """
+        measure the difference from w_global and each group model
+        """
+        for idx, w_group in zip(train_order, w_groups):
+            diff = 0
+            for k in w_global.keys():
+                diff += torch.norm(w_global[k] - w_group[1][k])
+            logging.info("######the gap between gloabl model and model of group {} diff = {}######".format(idx, diff))
+
+    def _aggregate(self, w_locals):
+        training_num = 0
+        for idx in range(len(w_locals)):
+            (sample_num, averaged_params) = w_locals[idx]
+            training_num += sample_num
+
+        initial_params = copy.deepcopy(w_locals[0])
+
+        (sample_num, averaged_params) = initial_params
+        for k in averaged_params.keys():
+            for i in range(0, len(w_locals)):
+                local_sample_number, local_model_params = w_locals[i]
+                w = local_sample_number / training_num
+                if i == 0:
+                    averaged_params[k] = local_model_params[k] * w
+                else:
+                    averaged_params[k] += local_model_params[k] * w
+        return averaged_params
 """
 
 """

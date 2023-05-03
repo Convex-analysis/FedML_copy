@@ -16,8 +16,8 @@ train_args:
   client_id_list: "[]"
   client_num_in_total: 1000
   client_num_per_round: 10
-  comm_round: 2
-  epochs: 1
+  comm_round: 3
+  epochs: 3
   batch_size: 10
   client_optimizer: sgd
   learning_rate: 0.03
@@ -26,7 +26,7 @@ train_args:
   group_num: 5
   group_comm_round: 2
   federation_num : 2
-  lr: 0.001
+  lr: 0.01
 
 validation_args:
   frequency_of_the_test: 5

@@ -1,3 +1,5 @@
+import numpy
+import copy
 import logging
 
 import numpy as np
@@ -5,7 +7,7 @@ import numpy as np
 from .client import HFLClient
 from .cloud import Cloud
 from .group import Group
-from ..fedavg.fedavg_api import FedAvgAPI
+
 from fedml.ml.trainer.trainer_creator import create_model_trainer
 
 
@@ -43,13 +45,13 @@ class MultiHierFLTrainer():
 
         self.group_dict = None
         self.group_indexes = None
-        
-        self._setup_federations(self.args.federation_num)
+
         self._setup_clients_for_MHFL(
             self.train_data_local_num_dict,
             self.train_data_local_dict,
             self.test_data_local_dict,
         )
+        self._setup_federations(self.args.federation_num)
         self._setup_groups_for_MHFL()
         
     # resign all client to corresponding groups
@@ -129,10 +131,21 @@ class MultiHierFLTrainer():
         logging.info("############setup_federations_for_MHFL (START)#############")
         list_of_federation = []
         for i in range(federation_num):
-            list_of_federation.append(Cloud(self.args, self.device, self.model, self.model_trainer,self.client_list))
+            test_client_list = copy.deepcopy(self.client_list)
+            model = copy.deepcopy(self.model)
+            model_trainer = copy.deepcopy(self.model_trainer)
+            list_of_federation.append(Cloud(i, self.args,  self.device, model, model_trainer, test_client_list))
+        for hfl in list_of_federation:
+            hfl.set_test_data_dict(self.test_data_local_dict)
+            hfl.set_train_data_local_num_dict(self.train_data_local_num_dict)
+            hfl.set_train_data_local_dict(self.train_data_local_dict)
+
         self.federation_list = list_of_federation
         logging.info("############setup_federations_for_MHFL (END)#############")
 
     def train(self):
+        logging.info("############Multi Federation Training (START)#############")
         for hfl in self.federation_list:
+            logging.info("############Training Cloud {} (START)#############".format(hfl.idx))
             hfl.train()
+        logging.info("############Multi Federation Training (END)#############")
