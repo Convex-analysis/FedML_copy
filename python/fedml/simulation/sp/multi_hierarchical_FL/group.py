@@ -60,7 +60,8 @@ class Group(FedAvgAPI):
             for global_epoch in sorted(w_locals_dict.keys()):
                 w_locals = w_locals_dict[global_epoch]
                 w_group_list.append((global_epoch, self._aggregate(w_locals)))
-
+            if w_group_list == []:
+                pass
             # update the group weight
             w_group = w_group_list[-1][1]
         return w_group_list

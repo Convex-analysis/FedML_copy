@@ -1,6 +1,6 @@
 import fedml
 
-from fedml import FedMLRunner
+from FedML_copy.python.fedml import FedMLRunner
 
 if __name__ == "__main__":
     # init FedML framework

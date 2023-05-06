@@ -1,8 +1,11 @@
 import sys
 
 import fedml
+
+from FedML_copy.python.fedml import FedMLRunner
+
 sys.path.append("../../../")
-from python.fedml import FedMLRunner
+
 
 
 if __name__ == "__main__":

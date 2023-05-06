@@ -40,6 +40,7 @@ class MultiHierFLTrainer():
 
         logging.info("model = {}".format(model))
         self.model_trainer = create_model_trainer(model, args)
+        #self.model_trainer = None
         self.model = model
         logging.info("self.model_trainer = {}".format(self.model_trainer))
 
@@ -131,9 +132,12 @@ class MultiHierFLTrainer():
         logging.info("############setup_federations_for_MHFL (START)#############")
         list_of_federation = []
         for i in range(federation_num):
-            test_client_list = copy.deepcopy(self.client_list)
+            #test_client_list = copy.deepcopy(self.client_list)
+            test_client_list = self.client_list
             model = copy.deepcopy(self.model)
-            model_trainer = copy.deepcopy(self.model_trainer)
+            #model = self.model
+            #model_trainer = copy.deepcopy(self.model_trainer)
+            model_trainer = self.model_trainer
             list_of_federation.append(Cloud(i, self.args,  self.device, model, model_trainer, test_client_list))
         for hfl in list_of_federation:
             hfl.set_test_data_dict(self.test_data_local_dict)

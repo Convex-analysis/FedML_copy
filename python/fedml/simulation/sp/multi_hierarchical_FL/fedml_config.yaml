@@ -16,17 +16,17 @@ train_args:
   client_id_list: "[]"
   client_num_in_total: 1000
   client_num_per_round: 10
-  comm_round: 3
-  epochs: 3
+  comm_round: 5
+  epochs: 1
   batch_size: 10
   client_optimizer: sgd
   learning_rate: 0.03
   weight_decay: 0.001
   group_method: "random"
-  group_num: 5
-  group_comm_round: 2
-  federation_num : 2
-  lr: 0.01
+  group_num: 10
+  group_comm_round: 5
+  federation_num : 3
+  lr: 0.001
 
 validation_args:
   frequency_of_the_test: 5

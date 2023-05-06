@@ -53,4 +53,12 @@ class HFLClient(Client):
             )
             if global_epoch % self.args.frequency_of_the_test == 0 or epoch == self.args.epochs - 1:
                 w_list.append((global_epoch, copy.deepcopy(self.model.state_dict())))
+
+        w_tmp = w_list[0]
+        for w in w_list:
+            epoch_idx = w[0]
+            diff = 0
+            diff += torch.norm(w[1]["linear.weight"] - w_tmp[1]["linear.weight"])
+            print("epoch {}  model_diff {}".format(epoch_idx, diff))
+
         return w_list
