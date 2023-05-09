@@ -22,6 +22,7 @@ class Group(FedAvgAPI):
         self.device = device
         self.client_dict = {}
         self.train_data_local_num_dict = train_data_local_num_dict
+        self.diff = 0
         for client_idx in total_client_indexes:
             self.client_dict[client_idx] = HFLClient(
                 client_idx,

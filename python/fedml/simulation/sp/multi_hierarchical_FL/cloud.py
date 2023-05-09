@@ -10,8 +10,23 @@ from .group import Group
 from ..hierarchical_fl.trainer import HierarchicalTrainer
 
 
+def _get_model_diff(w_global, w_groups, train_order):
+    """
+    measure the difference from w_global and each group model
+    """
+    diff_list = []
+    for idx, w_group in zip(train_order, w_groups):
+        diff = 0
+        for k in w_global.keys():
+            diff += torch.norm(w_global[k] - w_group[1][k])
+
+        logging.info("######the gap between gloabl model and model of group {} diff = {}######".format(idx, diff))
+        diff_list.append((idx, diff))
+    return diff_list
+
+
 class Cloud(HierarchicalTrainer):
-    def __init__(self,idx, args, device, model, model_trainer,client_list):
+    def __init__(self, idx, args, device, model, model_trainer, client_list):
         self.idx = idx
         self.args = args
         self.device = device
@@ -23,8 +38,10 @@ class Cloud(HierarchicalTrainer):
         self.test_data_local_dict = None
         self.train_data_local_num_dict = None
         self.train_data_local_dict = None
+
     def set_group_list(self, group_list=list):
         self.group_list = group_list
+
     def set_group_indexes(self, group_object_list=list):
         client_to_group_indexes = {}
         for group in group_object_list:
@@ -45,13 +62,14 @@ class Cloud(HierarchicalTrainer):
                 self.group_list,
                 self.args.client_num_per_round,
             )
-            #train each group
+            # train each group
             w_groups_dict = {}
             train_order = []
             for group in self.group_list:
                 train_order.append(group.idx)
-                sampled_client_indexes = [client for client in group_to_client_indexes if client in group.client_dict.keys()]
-                if sampled_client_indexes == []:
+                sampled_client_indexes = [client for client in group_to_client_indexes if
+                                          client in group.client_dict.keys()]
+                if not sampled_client_indexes:
                     break
                 w_group_list = group.train(
                     global_round_idx, w_global, sampled_client_indexes
@@ -63,26 +81,18 @@ class Cloud(HierarchicalTrainer):
                         (group.get_sample_number(sampled_client_indexes), w)
                     )
 
-
-
+            group_diff_dict = {}
             # aggregate group weights into the global weight
             for global_epoch in sorted(w_groups_dict.keys()):
                 w_groups = w_groups_dict[global_epoch]
 
-                tmp_global_w = copy.deepcopy(w_global)
-
                 w_global = self._aggregate(w_groups)
 
-
                 """
-                diff = 0
-                diff += torch.norm(w_global["linear.weight"] - tmp_global_w["linear.weight"])
-                print("different of two global model .{}".format(diff))
+                measure the difference from w_global and each group model and store the differ in a dictionary
+                group_diff_dict = globalepoch : groups differ
+                groups differ is a list :   [(groupid, diff)]
                 """
-                #measure the difference from w_global and each group model
-                #self._get_model_diff(w_global, w_groups, train_order)
-
-
 
                 # evaluate performance
                 if (
@@ -94,12 +104,32 @@ class Cloud(HierarchicalTrainer):
                         - 1
                 ):
                     self.model.load_state_dict(w_global)
+                    group_diff_dict[global_epoch] = _get_model_diff(w_global, w_groups, train_order)
                     #self._local_test_on_all_clients(global_epoch)
                     self.test_on_local_clients(global_epoch)
 
 
+            """
+                        for global_epochs in sorted(group_diff_dict.keys()):
+                w_groups_diff = group_diff_dict[global_epochs]
+                for idx, diff in w_groups_diff:
+                    for group in self.group_list:
+                        if group.idx == idx:
+                            group.diff += diff
+            """
+        for group in self.group_list:
+            diff = 0
+            spcfc_group_differ = []
+            for global_epochs in sorted(group_diff_dict.keys()):
+                w_groups_diff = group_diff_dict[global_epochs]
+                spcfc_group_differ = [diff for idx, diff in w_groups_diff if idx == group.idx]
+            for id, item in enumerate(spcfc_group_differ):
+                diff = diff * 0.99 + float(item) * 0.01
+            group.diff = diff
+        print([(group.idx, group.diff) for group in self.group_list])
+
     def _client_sampling(self, global_round_idx, group_list, client_num_per_round):
-        #store all groups' client and ready to sample
+        # store all groups' client and ready to sample
         total_canadiate_client = []
         for group in group_list:
             total_canadiate_client.extend(group.client_dict.keys())
@@ -107,10 +137,11 @@ class Cloud(HierarchicalTrainer):
             client_indexes = [client_index for client_index in range(total_canadiate_client)]
         else:
             num_clients = min(client_num_per_round, len(total_canadiate_client))
-            np.random.seed(global_round_idx)  # make sure for each comparison, we are selecting the same clients each round
+            np.random.seed(
+                global_round_idx)  # make sure for each comparison, we are selecting the same clients each round
             client_indexes = np.random.choice(total_canadiate_client, num_clients, replace=False)
         logging.info("client_indexes = %s" % str(client_indexes))
-        
+
         group_to_client_indexes = {}
         for client_idx in client_indexes:
             group_idx = self.group_indexes[client_idx]
@@ -121,9 +152,9 @@ class Cloud(HierarchicalTrainer):
             "client_indexes of each group = {}".format(group_to_client_indexes)
         )
         return client_indexes
-    
+
     def _local_test_on_all_clients(self, round_idx):
-        
+
         logging.info("################local_test_on_all_clients : {}".format(round_idx))
 
         train_metrics = {"num_samples": [], "num_correct": [], "losses": []}
@@ -131,7 +162,7 @@ class Cloud(HierarchicalTrainer):
         test_metrics = {"num_samples": [], "num_correct": [], "losses": []}
 
         client = self.client_list[0]
-        
+
         for client_idx in range(self.args.client_num_in_total):
             """
             Note: for datasets like "fed_CIFAR100" and "fed_shakespheare",
@@ -156,7 +187,7 @@ class Cloud(HierarchicalTrainer):
             test_metrics["num_samples"].append(copy.deepcopy(test_local_metrics["test_total"]))
             test_metrics["num_correct"].append(copy.deepcopy(test_local_metrics["test_correct"]))
             test_metrics["losses"].append(copy.deepcopy(test_local_metrics["test_loss"]))
-            
+
         # test on training dataset
         train_acc = sum(train_metrics["num_correct"]) / sum(train_metrics["num_samples"])
         train_loss = sum(train_metrics["losses"]) / sum(train_metrics["num_samples"])
@@ -247,8 +278,6 @@ class Cloud(HierarchicalTrainer):
         mlops.log({"Test/Loss": test_loss, "round": round_idx})
         logging.info(stats)
 
-
-
     def set_test_data_dict(self, test_data_local_dict):
         self.test_data_local_dict = test_data_local_dict
 
@@ -257,16 +286,6 @@ class Cloud(HierarchicalTrainer):
 
     def set_train_data_local_dict(self, train_data_local_dict):
         self.train_data_local_dict = train_data_local_dict
-
-    def _get_model_diff(self, w_global, w_groups, train_order):
-        """
-        measure the difference from w_global and each group model
-        """
-        for idx, w_group in zip(train_order, w_groups):
-            diff = 0
-            for k in w_global.keys():
-                diff += torch.norm(w_global[k] - w_group[1][k])
-            logging.info("######the gap between gloabl model and model of group {} diff = {}######".format(idx, diff))
 
     def _aggregate(self, w_locals):
         training_num = 0
@@ -286,6 +305,8 @@ class Cloud(HierarchicalTrainer):
                 else:
                     averaged_params[k] += local_model_params[k] * w
         return averaged_params
+
+
 """
 
 """

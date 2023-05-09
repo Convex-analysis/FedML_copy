@@ -17,7 +17,7 @@ train_args:
   client_num_in_total: 1000
   client_num_per_round: 10
   comm_round: 5
-  epochs: 1
+  epochs: 5
   batch_size: 10
   client_optimizer: sgd
   learning_rate: 0.03
@@ -29,7 +29,7 @@ train_args:
   lr: 0.001
 
 validation_args:
-  frequency_of_the_test: 5
+  frequency_of_the_test: 25
 
 device_args:
   using_gpu: true
