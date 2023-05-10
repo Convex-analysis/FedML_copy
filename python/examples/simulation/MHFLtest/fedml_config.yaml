@@ -16,7 +16,7 @@ train_args:
   client_id_list: "[]"
   client_num_in_total: 1000
   client_num_per_round: 10
-  comm_round: 5
+  comm_round: 10
   epochs: 5
   batch_size: 10
   client_optimizer: sgd
@@ -25,7 +25,7 @@ train_args:
   group_method: "random"
   group_num: 10
   group_comm_round: 5
-  federation_num : 3
+  federation_num : 1
   lr: 0.001
 
 validation_args:

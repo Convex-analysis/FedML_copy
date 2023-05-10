@@ -66,20 +66,20 @@ class Cloud(HierarchicalTrainer):
             w_groups_dict = {}
             train_order = []
             for group in self.group_list:
-                train_order.append(group.idx)
+
                 sampled_client_indexes = [client for client in group_to_client_indexes if
                                           client in group.client_dict.keys()]
-                if not sampled_client_indexes:
-                    break
-                w_group_list = group.train(
-                    global_round_idx, w_global, sampled_client_indexes
-                )
-                for global_epoch, w in w_group_list:
-                    if not global_epoch in w_groups_dict:
-                        w_groups_dict[global_epoch] = []
-                    w_groups_dict[global_epoch].append(
-                        (group.get_sample_number(sampled_client_indexes), w)
+                if len(sampled_client_indexes) >= 1:
+                    train_order.append(group.idx)
+                    w_group_list = group.train(
+                        global_round_idx, w_global, sampled_client_indexes
                     )
+                    for global_epoch, w in w_group_list:
+                        if not global_epoch in w_groups_dict:
+                            w_groups_dict[global_epoch] = []
+                        w_groups_dict[global_epoch].append(
+                            (group.get_sample_number(sampled_client_indexes), w)
+                        )
 
             group_diff_dict = {}
             # aggregate group weights into the global weight
@@ -93,10 +93,10 @@ class Cloud(HierarchicalTrainer):
                 group_diff_dict = globalepoch : groups differ
                 groups differ is a list :   [(groupid, diff)]
                 """
-
                 # evaluate performance
                 if (
-                        global_epoch % self.args.frequency_of_the_test == 0
+                        global_epoch == 0
+                        or (global_epoch + 1) % self.args.frequency_of_the_test == 0
                         or global_epoch
                         == self.args.comm_round
                         * self.args.group_comm_round
@@ -104,10 +104,11 @@ class Cloud(HierarchicalTrainer):
                         - 1
                 ):
                     self.model.load_state_dict(w_global)
+                    if not global_epoch in w_groups_dict:
+                        group_diff_dict[global_epoch] = []
                     group_diff_dict[global_epoch] = _get_model_diff(w_global, w_groups, train_order)
-                    #self._local_test_on_all_clients(global_epoch)
+                    # self._local_test_on_all_clients(global_epoch)
                     self.test_on_local_clients(global_epoch)
-
 
             """
                         for global_epochs in sorted(group_diff_dict.keys()):
@@ -120,11 +121,11 @@ class Cloud(HierarchicalTrainer):
         for group in self.group_list:
             diff = 0
             spcfc_group_differ = []
-            for global_epochs in sorted(group_diff_dict.keys()):
-                w_groups_diff = group_diff_dict[global_epochs]
+            for gpochs in sorted(group_diff_dict.keys()):
+                w_groups_diff = group_diff_dict[gpochs]
                 spcfc_group_differ = [diff for idx, diff in w_groups_diff if idx == group.idx]
             for id, item in enumerate(spcfc_group_differ):
-                diff = diff * 0.99 + float(item) * 0.01
+                diff = diff + float(item)
             group.diff = diff
         print([(group.idx, group.diff) for group in self.group_list])
 
