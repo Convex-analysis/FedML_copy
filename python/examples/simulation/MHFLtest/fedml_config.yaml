@@ -25,7 +25,7 @@ train_args:
   group_method: "random"
   group_num: 10
   group_comm_round: 5
-  federation_num : 1
+  federation_num : 3
   lr: 0.001
 
 validation_args:

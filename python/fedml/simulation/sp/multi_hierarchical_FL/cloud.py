@@ -51,6 +51,7 @@ class Cloud(HierarchicalTrainer):
 
     def train(self):
         w_global = self.model.state_dict()
+        group_diff_dict = {}
         for global_round_idx in range(self.args.comm_round):
             logging.info(
                 "################Global Communication Round : {}".format(
@@ -81,7 +82,7 @@ class Cloud(HierarchicalTrainer):
                             (group.get_sample_number(sampled_client_indexes), w)
                         )
 
-            group_diff_dict = {}
+
             # aggregate group weights into the global weight
             for global_epoch in sorted(w_groups_dict.keys()):
                 w_groups = w_groups_dict[global_epoch]
@@ -122,10 +123,11 @@ class Cloud(HierarchicalTrainer):
             diff = 0
             spcfc_group_differ = []
             for gpochs in sorted(group_diff_dict.keys()):
-                w_groups_diff = group_diff_dict[gpochs]
-                spcfc_group_differ = [diff for idx, diff in w_groups_diff if idx == group.idx]
-            for id, item in enumerate(spcfc_group_differ):
-                diff = diff + float(item)
+                for idx, diff in group_diff_dict[gpochs]:
+                    if idx == group.idx:
+                        spcfc_group_differ.append(diff)
+            for item in spcfc_group_differ:
+                diff = diff * 0.9 + float(item)
             group.diff = diff
         print([(group.idx, group.diff) for group in self.group_list])
 
@@ -153,6 +155,9 @@ class Cloud(HierarchicalTrainer):
             "client_indexes of each group = {}".format(group_to_client_indexes)
         )
         return client_indexes
+
+    def _all_group_participate_client_sampling(self, global_round_idx, group_list, client_num_per_round):
+        pass
 
     def _local_test_on_all_clients(self, round_idx):
 
