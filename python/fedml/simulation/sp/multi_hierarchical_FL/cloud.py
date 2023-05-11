@@ -10,21 +10,6 @@ from .group import Group
 from ..hierarchical_fl.trainer import HierarchicalTrainer
 
 
-def _get_model_diff(w_global, w_groups, train_order):
-    """
-    measure the difference from w_global and each group model
-    """
-    diff_list = []
-    for idx, w_group in zip(train_order, w_groups):
-        diff = 0
-        for k in w_global.keys():
-            diff += torch.norm(w_global[k] - w_group[1][k])
-
-        logging.info("######the gap between gloabl model and model of group {} diff = {}######".format(idx, diff))
-        diff_list.append((idx, diff))
-    return diff_list
-
-
 def generate_array_with_constant_sum(n, total_sum):
     # initialize array with all 1's
     arr = [1] * n
@@ -132,7 +117,7 @@ class Cloud(HierarchicalTrainer):
                     self.model.load_state_dict(w_global)
                     if not global_epoch in w_groups_dict:
                         group_diff_dict[global_epoch] = []
-                    group_diff_dict[global_epoch] = _get_model_diff(w_global, w_groups, train_order)
+                    group_diff_dict[global_epoch] = self._get_model_diff(w_global, w_groups, train_order, global_epoch)
                     # self._local_test_on_all_clients(global_epoch)
                     self.test_on_local_clients(global_epoch)
 
@@ -247,20 +232,20 @@ class Cloud(HierarchicalTrainer):
 
         stats = {"training_acc": train_acc, "training_loss": train_loss}
         if self.args.enable_wandb:
-            wandb.log({"Train/Acc": train_acc, "round": round_idx})
-            wandb.log({"Train/Loss": train_loss, "round": round_idx})
+            wandb.log({"Train/Acc"+self.idx : train_acc, "round": round_idx})
+            wandb.log({"Train/Loss"+self.idx : train_loss, "round": round_idx})
 
-        mlops.log({"Train/Acc": train_acc, "round": round_idx})
-        mlops.log({"Train/Loss": train_loss, "round": round_idx})
+        mlops.log({"Train/Acc"+self.idx : train_acc, "round": round_idx})
+        mlops.log({"Train/Loss"+self.idx : train_loss, "round": round_idx})
         logging.info(stats)
 
         stats = {"test_acc": test_acc, "test_loss": test_loss}
         if self.args.enable_wandb:
-            wandb.log({"Test/Acc": test_acc, "round": round_idx})
-            wandb.log({"Test/Loss": test_loss, "round": round_idx})
+            wandb.log({"Test/Acc"+self.idx : test_acc, "round": round_idx})
+            wandb.log({"Test/Loss"+self.idx : test_loss, "round": round_idx})
 
-        mlops.log({"Test/Acc": test_acc, "round": round_idx})
-        mlops.log({"Test/Loss": test_loss, "round": round_idx})
+        mlops.log({"Test/Acc"+self.idx : test_acc, "round": round_idx})
+        mlops.log({"Test/Loss"+self.idx : test_loss, "round": round_idx})
         logging.info(stats)
 
     def test_on_local_clients(self, round_idx):
@@ -273,6 +258,7 @@ class Cloud(HierarchicalTrainer):
         client = self.client_list[0]
 
         total_canadiate_client = []
+        
         for group in self.group_list:
             total_canadiate_client.extend(group.client_dict.keys())
 
@@ -311,21 +297,22 @@ class Cloud(HierarchicalTrainer):
 
         stats = {"training_acc": train_acc, "training_loss": train_loss}
         if self.args.enable_wandb:
-            wandb.log({"Train/Acc": train_acc, "round": round_idx})
-            wandb.log({"Train/Loss": train_loss, "round": round_idx})
+            wandb.log({"Train/Acc" + " of Federation " + str(self.idx): train_acc, "round": round_idx})
+            wandb.log({"Train/Loss" + " of Federation " + str(self.idx): train_loss, "round": round_idx})
 
-        mlops.log({"Train/Acc": train_acc, "round": round_idx})
-        mlops.log({"Train/Loss": train_loss, "round": round_idx})
+        mlops.log({"Train/Acc" + " of Federation " + str(self.idx): train_acc, "round": round_idx})
+        mlops.log({"Train/Loss" + " of Federation " + str(self.idx): train_loss, "round": round_idx})
         logging.info(stats)
 
         stats = {"test_acc": test_acc, "test_loss": test_loss}
         if self.args.enable_wandb:
-            wandb.log({"Test/Acc": test_acc, "round": round_idx})
-            wandb.log({"Test/Loss": test_loss, "round": round_idx})
+            wandb.log({"Test/Acc" + " of Federation " + str(self.idx): test_acc, "round": round_idx})
+            wandb.log({"Test/Loss" + " of Federation " + str(self.idx): test_loss, "round": round_idx})
 
-        mlops.log({"Test/Acc": test_acc, "round": round_idx})
-        mlops.log({"Test/Loss": test_loss, "round": round_idx})
+        mlops.log({"Test/Acc" + " of Federation " + str(self.idx): test_acc, "round": round_idx})
+        mlops.log({"Test/Loss" + " of Federation " + str(self.idx): test_loss, "round": round_idx})
         logging.info(stats)
+
 
     def set_test_data_dict(self, test_data_local_dict):
         self.test_data_local_dict = test_data_local_dict
@@ -355,7 +342,23 @@ class Cloud(HierarchicalTrainer):
                     averaged_params[k] += local_model_params[k] * w
         return averaged_params
 
+    def _get_model_diff(self, w_global, w_groups, train_order, round_idx):
+        """
+        measure the difference from w_global and each group model
+        """
+        diff_list = []
+        for idx, w_group in zip(train_order, w_groups):
+            diff = 0
+            for k in w_global.keys():
+                diff += torch.norm(w_global[k] - w_group[1][k])
 
+            logging.info("######the gap between gloabl model and model of group {} diff = {}######".format(idx, diff))
+            """
+                        if self.args.enable_wandb:
+                wandb.log({"Train/Diff in Federation " + str(self.idx) + " Group " + str(idx): diff, "round": round_idx})
+            """
+            diff_list.append((idx, diff))
+        return diff_list
 """
 
 """
