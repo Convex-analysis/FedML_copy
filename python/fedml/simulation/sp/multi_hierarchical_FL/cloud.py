@@ -25,6 +25,22 @@ def _get_model_diff(w_global, w_groups, train_order):
     return diff_list
 
 
+def generate_array_with_constant_sum(n, total_sum):
+    # initialize array with all 1's
+    arr = [1] * n
+    remaining_sum = total_sum - n  # subtract n since we have n elements already
+
+    # distribute remaining sum randomly
+    i = 0
+    while remaining_sum > 0:
+        arr[i] += 1
+        remaining_sum -= 1
+        i = (i + 1) % n
+
+    return arr
+
+
+
 class Cloud(HierarchicalTrainer):
     def __init__(self, idx, args, device, model, model_trainer, client_list):
         self.idx = idx
@@ -58,11 +74,20 @@ class Cloud(HierarchicalTrainer):
                     global_round_idx
                 )
             )
-            group_to_client_indexes = self._client_sampling(
+            if self.args.group_participation_method == "uniform":
+                group_to_client_indexes = self._all_group_participate_client_sampling(
+                    global_round_idx,
+                    self.group_list,
+                    self.args.client_num_per_round,
+                )
+            elif self.args.group_participation_method == "random":
+                group_to_client_indexes = self._client_sampling(
                 global_round_idx,
                 self.group_list,
                 self.args.client_num_per_round,
-            )
+                )
+            else:
+                Exception("Unknown group participation method {}".format(self.args.group_participation_method))
             # train each group
             w_groups_dict = {}
             train_order = []
@@ -157,7 +182,25 @@ class Cloud(HierarchicalTrainer):
         return client_indexes
 
     def _all_group_participate_client_sampling(self, global_round_idx, group_list, client_num_per_round):
-        pass
+        client_indexes = []
+        group_to_client_indexes = {}
+        #根据group的数量将client_num_per_round分配到每个group中
+        selected_array = generate_array_with_constant_sum(len(group_list), client_num_per_round)
+        for idx, group in enumerate(group_list):
+            #print(group.client_dict.keys())
+            np.random.seed(
+                global_round_idx+idx)  # make sure for each comparison, we are selecting the same clients each round
+            sampled_client_index = np.random.choice(list(group.client_dict.keys()), selected_array[idx], replace=False)
+            if not group.idx in group_to_client_indexes:
+                group_to_client_indexes[group.idx] = []
+            group_to_client_indexes[group.idx].append(sampled_client_index)
+            client_indexes.extend(sampled_client_index)
+        logging.info("client_indexes = %s" % str(client_indexes))
+        logging.info(
+            "client_indexes of each group = {}".format(group_to_client_indexes)
+        )
+        return client_indexes
+
 
     def _local_test_on_all_clients(self, round_idx):
 
