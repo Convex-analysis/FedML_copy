@@ -1,6 +1,9 @@
+import os.path
+
 import numpy
 import copy
 import logging
+import json
 
 import numpy as np
 
@@ -10,6 +13,13 @@ from .group import Group
 
 from fedml.ml.trainer.trainer_creator import create_model_trainer
 
+#解析json文件，返回一个字典
+def parse_json_file(json_file):
+    root = os.getcwd()
+
+    with open(os.path.join(root, json_file), "r") as f:
+        data = json.load(f)
+    return data
 
 # 利用这个traininer初始化所有的HFLtrainer，分配客户端和数据
 class MultiHierFLTrainer():
@@ -53,7 +63,10 @@ class MultiHierFLTrainer():
             self.test_data_local_dict,
         )
         self._setup_federations(self.args.federation_num)
-        self._setup_groups_for_MHFL()
+        if self.args.group_partition_type == "random":
+            self._setup_groups_for_MHFL()
+        elif self.args.group_partition_type == "constant":
+            self._setup_groups_for_MHFL_from_file()
         
     # resign all client to corresponding groups
     def _setup_clients_for_MHFL(
@@ -126,6 +139,21 @@ class MultiHierFLTrainer():
             tmp_cloud.set_group_list(group_temp_list)
             tmp_cloud.set_group_indexes(group_temp_list)
         logging.info("############setup_groups_for_MHFL (END)#############")
+
+    def _setup_groups_for_MHFL_from_file(self):
+        logging.info("############_setup_groups_for_MHFL_from_file (START)#############")
+        cloud_to_group = parse_json_file(self.args.group_partition_file)
+        print("cloud_to_group : {}".format(cloud_to_group))
+        for federation in cloud_to_group.items():
+            group_list = []
+            idx = federation[1]["id"]
+            tmp_group_list = federation[1]["member"]
+            cloud = self.federation_list[idx]
+            for group_idx in tmp_group_list:
+                group_list.append(self.group_dict[group_idx])
+            cloud.set_group_list(group_list)
+            cloud.set_group_indexes(group_list)
+        logging.info("############_setup_groups_for_MHFL_from_file (END)#############")
 
     # setting up federations in our simulation
     def _setup_federations(self, federation_num):
