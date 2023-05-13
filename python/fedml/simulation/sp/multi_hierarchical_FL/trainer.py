@@ -6,6 +6,7 @@ import logging
 import json
 
 import numpy as np
+import wandb
 
 from .client import HFLClient
 from .cloud import Cloud
@@ -181,3 +182,18 @@ class MultiHierFLTrainer():
             logging.info("############Training Cloud {} (START)#############".format(hfl.idx))
             hfl.train()
         logging.info("############Multi Federation Training (END)#############")
+        self.test_diff_vs_acc()
+
+    def test_diff_vs_acc(self):
+        tmp_stats = {}
+        group_index = []
+        logging.info("############Multi Federation Testing (START)#############")
+        for hfl in self.federation_list:
+            tmp_stats = hfl.local_test_on_acc_diff()
+            if self.args.enable_wandb:
+                trainacc = tmp_stats["training_acc"]
+                diff = tmp_stats["diff"]
+                group_index = tmp_stats["group_index"]
+                train_vs_diff = "Train/Acc of Gourps {}".format(group_index)
+                wandb.log({"Train/Acc": trainacc, "model_diff": diff})
+        logging.info("############Multi Federation Testing (END)#############")

@@ -1,3 +1,7 @@
+import itertools
+import random
+import time
+
 import numpy
 import logging
 import numpy as np
@@ -25,7 +29,6 @@ def generate_array_with_constant_sum(n, total_sum):
     return arr
 
 
-
 class Cloud(HierarchicalTrainer):
     def __init__(self, idx, args, device, model, model_trainer, client_list):
         self.idx = idx
@@ -40,6 +43,14 @@ class Cloud(HierarchicalTrainer):
         self.train_data_local_num_dict = None
         self.train_data_local_dict = None
 
+        self.run_time = 0
+        self.mantaince_cost = 0
+        self.computation_cost = 0
+        self.communication_cost = 0
+        self.computation_unit_cost = random.uniform(0, 0.1)
+        self.communication_unit_cost = random.uniform(0.05, 0.2)
+        self.mantaince_unit_cost = random.uniform(0, 0.2)
+
     def set_group_list(self, group_list=list):
         self.group_list = group_list
 
@@ -53,6 +64,7 @@ class Cloud(HierarchicalTrainer):
     def train(self):
         w_global = self.model.state_dict()
         group_diff_dict = {}
+        start_time = time.time()
         for global_round_idx in range(self.args.comm_round):
             logging.info(
                 "################Global Communication Round : {}".format(
@@ -129,6 +141,10 @@ class Cloud(HierarchicalTrainer):
                         if group.idx == idx:
                             group.diff += diff
             """
+        end_time = time.time()
+        self.run_time = end_time - start_time
+        self._calculate_cost()
+        #In this stage we caculated the diff of each group during training process
         for group in self.group_list:
             diff = 0
             spcfc_group_differ = []
@@ -137,9 +153,21 @@ class Cloud(HierarchicalTrainer):
                     if idx == group.idx:
                         spcfc_group_differ.append(diff)
             for item in spcfc_group_differ:
-                diff = diff * 0.9 + float(item)
+                diff = diff * 0.7 + float(item)
             group.diff = diff
-        print([(group.idx, group.diff) for group in self.group_list])
+        #print([(group.idx, group.diff) for group in self.group_list])
+        self.local_test_on_acc_diff()
+        """
+        #gengerate the combination of self.group_list
+        group_combination = []
+        for i in range(1, len(self.group_list) + 1):
+            group_combination.extend(list(itertools.combinations(self.group_list, i)))
+        """
+
+
+
+
+
 
     def _client_sampling(self, global_round_idx, group_list, client_num_per_round):
         # store all groups' client and ready to sample
@@ -359,6 +387,69 @@ class Cloud(HierarchicalTrainer):
             """
             diff_list.append((idx, diff))
         return diff_list
-"""
 
-"""
+    def _calculate_cost(self):
+        """
+        calculate the cost of each group
+        """
+        total_cost = 0
+        cost_list = []
+        for group in self.group_list:
+            cost = group.calculate_cost()
+            cost_list.append((group.idx, cost))
+        self.mantaince_cost = self.mantaince_unit_cost * self.run_time
+        self.computation_cost = self.computation_unit_cost * self.args.comm_round
+        self.communication_cost = self.communication_unit_cost * self.args.comm_round
+        total_cost = self.mantaince_cost + self.computation_cost + self.communication_cost
+        for cost in cost_list:
+            total_cost += cost[1]
+        logging.info("######the total cost of cloud {} is {}######".format(self.idx, total_cost))
+        return cost_list
+
+    def local_test_on_acc_diff(self):
+        avg_diff = sum([group.diff for group in self.group_list]) / len(self.group_list)
+        avg_diff = int(avg_diff * 10000) / 10000.0
+        logging.info("################test_on_local_clients : ")
+        group_index = [group.idx for group in self.group_list]
+        train_vs_diff = "Train/Acc of Gourps {}".format(group_index)
+        test_vs_diff = "Test/Acc of Gourps {}".format(group_index)
+
+        train_metrics = {"num_samples": [], "num_correct": [], "losses": []}
+
+        client = self.client_list[0]
+
+        total_canadiate_client = []
+
+        for group in self.group_list:
+            total_canadiate_client.extend(group.client_dict.keys())
+
+        for client_idx in total_canadiate_client:
+            """
+            Note: for datasets like "fed_CIFAR100" and "fed_shakespheare",
+            the training client number is larger than the testing client number
+            """
+            if self.test_data_local_dict[client_idx] is None:
+                continue
+            client.update_local_dataset(
+                0,
+                self.train_data_local_dict[client_idx],
+                self.test_data_local_dict[client_idx],
+                self.train_data_local_num_dict[client_idx],
+            )
+
+            train_local_metrics = client.local_test(False)
+            train_metrics["num_samples"].append(copy.deepcopy(train_local_metrics["test_total"]))
+            train_metrics["num_correct"].append(copy.deepcopy(train_local_metrics["test_correct"]))
+            train_metrics["losses"].append(copy.deepcopy(train_local_metrics["test_loss"]))
+
+
+        # test on training dataset
+        train_acc = sum(train_metrics["num_correct"]) / sum(train_metrics["num_samples"])
+        train_loss = sum(train_metrics["losses"]) / sum(train_metrics["num_samples"])
+
+
+        stats_train = {"training_acc": train_acc, "training_loss": train_loss, "diff": avg_diff, "group_index": group_index}
+        logging.info(stats_train)
+
+        return stats_train
+
