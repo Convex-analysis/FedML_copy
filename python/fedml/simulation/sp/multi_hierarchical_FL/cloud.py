@@ -407,8 +407,15 @@ class Cloud(HierarchicalTrainer):
         return cost_list
 
     def local_test_on_acc_diff(self):
-        avg_diff = sum([group.diff for group in self.group_list]) / len(self.group_list)
+        sample, diff = 0, 0
+        for group in self.group_list:
+            sample += group.get_sample_number()
+            diff += group.diff * group.get_sample_number()
+        avg_diff = diff/sample
+        #avg_diff = sum([group.diff for group in self.group_list]) / len(self.group_list)
         avg_diff = int(avg_diff * 10000) / 10000.0
+        avg_diff = avg_diff/len(self.group_list)
+
         logging.info("################test_on_local_clients : ")
         group_index = [group.idx for group in self.group_list]
         train_vs_diff = "Train/Acc of Gourps {}".format(group_index)
