@@ -28,6 +28,7 @@ class Group(FedAvgAPI):
         self.train_data_local_num_dict = train_data_local_num_dict
         self.diff = 0
         self.w_group = None
+
         #enconamic cost
         random.seed(self.idx)
         self.run_time = 0

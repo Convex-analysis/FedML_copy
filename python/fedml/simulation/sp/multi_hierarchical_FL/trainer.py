@@ -122,6 +122,7 @@ class MultiHierFLTrainer():
         group_index_list = list(self.group_dict.keys())
         cloud_to_group = {}
         # shuffle the group index
+        np.random.seed(len(self.federation_list))
         np.random.shuffle(group_index_list)
         total_cloud_number = len(self.federation_list)
         # reassign group indexes

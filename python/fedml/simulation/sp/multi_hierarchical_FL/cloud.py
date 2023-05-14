@@ -54,6 +54,7 @@ class Cloud(HierarchicalTrainer):
     def set_group_list(self, group_list=list):
         self.group_list = group_list
 
+    #group_index = {client_idx: group_idx}
     def set_group_indexes(self, group_object_list=list):
         client_to_group_indexes = {}
         for group in group_object_list:
@@ -153,7 +154,11 @@ class Cloud(HierarchicalTrainer):
                     if idx == group.idx:
                         spcfc_group_differ.append(diff)
             for item in spcfc_group_differ:
-                diff = diff * 0.7 + float(item)
+                #累加diff
+                diff = diff + float(item)
+                #最大diff
+                #if diff < float(item):
+                #    diff = float(item)
             group.diff = diff
         #print([(group.idx, group.diff) for group in self.group_list])
         self.local_test_on_acc_diff()
@@ -407,14 +412,29 @@ class Cloud(HierarchicalTrainer):
         return cost_list
 
     def local_test_on_acc_diff(self):
-        sample, diff = 0, 0
+        """
+        diff, avg_diff, sum_sample = 0, 0, 0
         for group in self.group_list:
-            sample += group.get_sample_number()
-            diff += group.diff * group.get_sample_number()
-        avg_diff = diff/sample
-        #avg_diff = sum([group.diff for group in self.group_list]) / len(self.group_list)
+            sample = 0
+            # count the number of items which value equals to group.idx
+            for item in self.group_indexes.values():
+                if item == group.idx:
+                    sample += 1
+                    sum_sample += sample
+            diff += group.diff * sample
+        avg_diff = int(diff * 10000) / 10000.0
+        avg_diff = avg_diff / len(self.group_list)
+        avg_diff = avg_diff / sum_sample
+        """
+        """
+        avg_diff = 0
+        for group in self.group_list:
+            if avg_diff < group.diff:
+                avg_diff = group.diff
+        
+        """
+        avg_diff = sum([group.diff for group in self.group_list]) / len(self.group_list)
         avg_diff = int(avg_diff * 10000) / 10000.0
-        avg_diff = avg_diff/len(self.group_list)
 
         logging.info("################test_on_local_clients : ")
         group_index = [group.idx for group in self.group_list]

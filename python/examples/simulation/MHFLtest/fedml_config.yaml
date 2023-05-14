@@ -15,8 +15,8 @@ train_args:
   federated_optimizer: "Multi-HierFL"
   client_id_list: "[]"
   client_num_in_total: 1000
-  client_num_per_round: 10
-  comm_round: 10
+  client_num_per_round: 50
+  comm_round: 20
   epochs: 5
   batch_size: 10
   client_optimizer: sgd
@@ -25,8 +25,8 @@ train_args:
   group_method: "random"
   group_partition_type: "random"
   group_partition_file: "./group_partation.json"
-  group_participation_method: "random"
-  group_num: 10
+  group_participation_method: "uniform"
+  group_num: 40
   group_comm_round: 5
   federation_num : 5
   lr: 0.001
@@ -43,9 +43,9 @@ comm_args:
 
 tracking_args:
    # When running on MLOps platform(open.fedml.ai), the default log path is at ~/fedml-client/fedml/logs/ and ~/fedml-server/fedml/logs/
-  enable_wandb: true
+  enable_wandb: false
   wandb_key: 7afc5847eb7c7a114528be19d6950cc6cbb57a31
   wandb_entity: xta_fl
   wandb_project: simulation
-  run_name: MHFLtest_5FL_10C_5G_5E_0.7Dis
-  using_mlops: true
+  run_name: Without_sample_uniform_30pc_10FL_30C_5G_5E_0.9Dis
+  using_mlops: false
