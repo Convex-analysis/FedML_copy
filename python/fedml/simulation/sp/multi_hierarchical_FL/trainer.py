@@ -5,6 +5,7 @@ import copy
 import logging
 import json
 
+import torch
 import numpy as np
 import wandb
 
@@ -145,16 +146,16 @@ class MultiHierFLTrainer():
     def _setup_groups_for_MHFL_from_file(self):
         logging.info("############_setup_groups_for_MHFL_from_file (START)#############")
         cloud_to_group = parse_json_file(self.args.group_partition_file)
-        print("cloud_to_group : {}".format(cloud_to_group))
         for federation in cloud_to_group.items():
             group_list = []
             idx = federation[1]["id"]
             tmp_group_list = federation[1]["member"]
-            cloud = self.federation_list[idx]
-            for group_idx in tmp_group_list:
-                group_list.append(self.group_dict[group_idx])
-            cloud.set_group_list(group_list)
-            cloud.set_group_indexes(group_list)
+            if idx <= len(self.federation_list)-1:
+                cloud = self.federation_list[idx]
+                for group_idx in tmp_group_list:
+                    group_list.append(self.group_dict[group_idx])
+                cloud.set_group_list(group_list)
+                cloud.set_group_indexes(group_list)
         logging.info("############_setup_groups_for_MHFL_from_file (END)#############")
 
     # setting up federations in our simulation
@@ -178,13 +179,40 @@ class MultiHierFLTrainer():
         logging.info("############setup_federations_for_MHFL (END)#############")
 
     def train(self):
+        tmp_cloud = []
+        cloud_train_stats_list = []
         logging.info("############Multi Federation Training (START)#############")
         for hfl in self.federation_list:
             logging.info("############Training Cloud {} (START)#############".format(hfl.idx))
-            hfl.train()
+            cloud_train_stats_list.append(hfl.train())
         logging.info("############Multi Federation Training (END)#############")
-        self.test_diff_vs_acc()
+        #self.test_diff_vs_acc()
+        logging.info("############Multi Federation Testing (START)#############")
+        for tmp_stats in cloud_train_stats_list:
+            if self.args.enable_wandb:
+                trainacc = tmp_stats["training_acc"]
+                diff = tmp_stats["diff"]
+                group_index = tmp_stats["group_index"]
+                train_vs_diff = "Train/Acc of Gourps {}".format(group_index)
+                wandb.log({"Train/Acc": trainacc, "model_diff": diff})
 
+        for i in range(3):
+            tmp_cloud.append(self.federation_list[i])
+        for i in range(len(self.federation_list)):
+            if self.federation_list[i] in tmp_cloud:
+                pass
+            else:
+                #get model parameters
+                model_params = self.federation_list[i].model.state_dict()
+                for cloud in tmp_cloud:
+                    cloud_model_params = cloud.model.state_dict()
+                    #calculate the difference between the model parameters
+                    diff = 0
+                    for key in model_params.keys():
+                        diff += torch.sum(torch.abs(model_params[key] - cloud_model_params[key]))
+                    diff = diff / len(model_params.keys())
+                    logging.info("diff between cloud {} and cloud {} is {}".format(i, cloud.idx, diff))
+        logging.info("############Multi Federation Testing (END)#############")
     def test_diff_vs_acc(self):
         tmp_stats = {}
         group_index = []
@@ -197,4 +225,23 @@ class MultiHierFLTrainer():
                 group_index = tmp_stats["group_index"]
                 train_vs_diff = "Train/Acc of Gourps {}".format(group_index)
                 wandb.log({"Train/Acc": trainacc, "model_diff": diff})
+        #遍历federation_list的第一到三个元素
+        for i in range(3):
+            tmp_stats.append(self.federation_list[i])
+        for i in range(len(self.federation_list)):
+            if self.federation_list[i] in tmp_stats:
+                pass
+            else:
+                #get model parameters
+                model_params = self.federation_list[i].model.state_dict()
+                for cloud in tmp_stats:
+                    cloud_model_params = cloud.model.state_dict()
+                    #calculate the difference between the model parameters
+                    diff = 0
+                    for key in model_params.keys():
+                        diff += torch.sum(torch.abs(model_params[key] - cloud_model_params[key]))
+                    diff = diff / len(model_params.keys())
+                    logging.info("diff between cloud {} and cloud {} is {}".format(i, cloud.idx, diff))
+
+
         logging.info("############Multi Federation Testing (END)#############")

@@ -63,6 +63,7 @@ class Cloud(HierarchicalTrainer):
         self.group_indexes = client_to_group_indexes
 
     def train(self):
+        train_loss_list = []
         w_global = self.model.state_dict()
         group_diff_dict = {}
         start_time = time.time()
@@ -131,9 +132,18 @@ class Cloud(HierarchicalTrainer):
                     if not global_epoch in w_groups_dict:
                         group_diff_dict[global_epoch] = []
                     group_diff_dict[global_epoch] = self._get_model_diff(w_global, w_groups, train_order, global_epoch)
+                    diff_list = group_diff_dict[global_epoch]
+                    avg_diff = sum([diff for idx, diff in diff_list]) / len(diff_list)
+                    if self.args.enable_wandb:
+                        wandb.log({"Train/Diff in Federation " + str(self.idx) : avg_diff,
+                                   "round": global_epoch})
                     # self._local_test_on_all_clients(global_epoch)
-                    self.test_on_local_clients(global_epoch)
-
+                    self.test_on_local_clients(global_epoch, train_loss_list)
+                    if len(train_loss_list) >= 2:
+                        diff_loss = abs(train_loss_list[-1]-train_loss_list[-2]) * 10
+                        if self.args.enable_wandb:
+                            wandb.log({"10Loss/Diff in Federation " + str(self.idx): diff_loss,
+                                       "round": global_epoch})
             """
                         for global_epochs in sorted(group_diff_dict.keys()):
                 w_groups_diff = group_diff_dict[global_epochs]
@@ -144,7 +154,7 @@ class Cloud(HierarchicalTrainer):
             """
         end_time = time.time()
         self.run_time = end_time - start_time
-        self._calculate_cost()
+
         #In this stage we caculated the diff of each group during training process
         for group in self.group_list:
             diff = 0
@@ -159,16 +169,12 @@ class Cloud(HierarchicalTrainer):
                 #最大diff
                 #if diff < float(item):
                 #    diff = float(item)
-            group.diff = diff
+            group.diff = diff/self.args.comm_round
+            #group.diff = diff
         #print([(group.idx, group.diff) for group in self.group_list])
-        self.local_test_on_acc_diff()
-        """
-        #gengerate the combination of self.group_list
-        group_combination = []
-        for i in range(1, len(self.group_list) + 1):
-            group_combination.extend(list(itertools.combinations(self.group_list, i)))
-        """
-
+        stats_train = self.local_test_on_acc_diff(train_loss_list)
+        self._calculate_cost()
+        return stats_train
 
 
 
@@ -281,7 +287,7 @@ class Cloud(HierarchicalTrainer):
         mlops.log({"Test/Loss"+self.idx : test_loss, "round": round_idx})
         logging.info(stats)
 
-    def test_on_local_clients(self, round_idx):
+    def test_on_local_clients(self, round_idx, train_loss_list=None):
         logging.info("################test_on_local_clients : {}".format(round_idx))
 
         train_metrics = {"num_samples": [], "num_correct": [], "losses": []}
@@ -323,7 +329,7 @@ class Cloud(HierarchicalTrainer):
         # test on training dataset
         train_acc = sum(train_metrics["num_correct"]) / sum(train_metrics["num_samples"])
         train_loss = sum(train_metrics["losses"]) / sum(train_metrics["num_samples"])
-
+        train_loss_list.append(train_loss)
         # test on test dataset
         test_acc = sum(test_metrics["num_correct"]) / sum(test_metrics["num_samples"])
         test_loss = sum(test_metrics["losses"]) / sum(test_metrics["num_samples"])
@@ -383,7 +389,7 @@ class Cloud(HierarchicalTrainer):
         for idx, w_group in zip(train_order, w_groups):
             diff = 0
             for k in w_global.keys():
-                diff += torch.norm(w_global[k] - w_group[1][k])
+                diff += torch.norm(w_global[k] - w_group[1][k])/torch.norm(w_global[k])
 
             logging.info("######the gap between gloabl model and model of group {} diff = {}######".format(idx, diff))
             """
@@ -409,9 +415,11 @@ class Cloud(HierarchicalTrainer):
         for cost in cost_list:
             total_cost += cost[1]
         logging.info("######the total cost of cloud {} is {}######".format(self.idx, total_cost))
+        for group in self.group_list:
+            logging.info("######the cost of group {} is {}||the diff of group {} is {}######".format(group.idx, group.total_cost, group.idx, group.diff))
         return cost_list
 
-    def local_test_on_acc_diff(self):
+    def local_test_on_acc_diff(self, train_loss_list=None):
         """
         diff, avg_diff, sum_sample = 0, 0, 0
         for group in self.group_list:

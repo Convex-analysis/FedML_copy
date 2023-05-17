@@ -38,6 +38,7 @@ class Group(FedAvgAPI):
         self.computation_unit_cost = random.uniform(0, 0.1)
         self.communication_unit_cost = random.uniform(0.1, 0.3)
         self.mantaince_unit_cost = random.uniform(0, 0.1)
+        self.total_cost = 0
 
         for client_idx in total_client_indexes:
             self.client_dict[client_idx] = HFLClient(
@@ -84,14 +85,15 @@ class Group(FedAvgAPI):
             w_group = w_group_list[-1][1]
         self.w_group = w_group
         end_timestamp = time.time()
-        self.set_run_time(end_timestamp - start_timestamp)
+        random.seed(self.idx)
+        self.set_run_time(self.args.group_comm_round * random.uniform(0.1, 0.3))
         self.set_computation_cost(self.computation_unit_cost * self.args.group_comm_round)
         self.set_communication_cost(self.communication_unit_cost * self.args.group_comm_round)
         return w_group_list
 
     def calculate_cost(self):
-        total_cost = self.mantaince_cost + self.computation_cost + self.communication_cost
-        return total_cost
+        self.total_cost = self.mantaince_cost + self.computation_cost + self.communication_cost
+        return self.total_cost
     def set_run_time(self, run_time):
         mantaince_cost = random.randint(1, 10)
         self.run_time = run_time
