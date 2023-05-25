@@ -68,11 +68,13 @@ class Cloud(HierarchicalTrainer):
         group_diff_dict = {}
         start_time = time.time()
         for global_round_idx in range(self.args.comm_round):
+            """
             logging.info(
                 "################Global Communication Round : {}".format(
                     global_round_idx
                 )
             )
+            """
             if self.args.group_participation_method == "uniform":
                 group_to_client_indexes = self._all_group_participate_client_sampling(
                     global_round_idx,
@@ -137,7 +139,7 @@ class Cloud(HierarchicalTrainer):
                     if self.args.enable_wandb:
                         wandb.log({"Train/Diff in Federation " + str(self.idx) : avg_diff,
                                    "round": global_epoch})
-                    # self._local_test_on_all_clients(global_epoch)
+                    #self._local_test_on_all_clients(global_epoch)
                     self.test_on_local_clients(global_epoch, train_loss_list)
                     if len(train_loss_list) >= 2:
                         diff_loss = abs(train_loss_list[-1]-train_loss_list[-2]) * 10
@@ -192,7 +194,7 @@ class Cloud(HierarchicalTrainer):
             np.random.seed(
                 global_round_idx)  # make sure for each comparison, we are selecting the same clients each round
             client_indexes = np.random.choice(total_canadiate_client, num_clients, replace=False)
-        logging.info("client_indexes = %s" % str(client_indexes))
+        #logging.info("client_indexes = %s" % str(client_indexes))
 
         group_to_client_indexes = {}
         for client_idx in client_indexes:
@@ -219,16 +221,16 @@ class Cloud(HierarchicalTrainer):
                 group_to_client_indexes[group.idx] = []
             group_to_client_indexes[group.idx].append(sampled_client_index)
             client_indexes.extend(sampled_client_index)
-        logging.info("client_indexes = %s" % str(client_indexes))
-        logging.info(
-            "client_indexes of each group = {}".format(group_to_client_indexes)
-        )
+        #logging.info("client_indexes = %s" % str(client_indexes))
+        #logging.info(
+        #    "client_indexes of each group = {}".format(group_to_client_indexes)
+        #)
         return client_indexes
 
 
     def _local_test_on_all_clients(self, round_idx):
 
-        logging.info("################local_test_on_all_clients : {}".format(round_idx))
+        #logging.info("################local_test_on_all_clients : {}".format(round_idx))
 
         train_metrics = {"num_samples": [], "num_correct": [], "losses": []}
 
@@ -271,24 +273,24 @@ class Cloud(HierarchicalTrainer):
 
         stats = {"training_acc": train_acc, "training_loss": train_loss}
         if self.args.enable_wandb:
-            wandb.log({"Train/Acc"+self.idx : train_acc, "round": round_idx})
-            wandb.log({"Train/Loss"+self.idx : train_loss, "round": round_idx})
+            wandb.log({"Train/Acc": train_acc, "round": round_idx})
+            wandb.log({"Train/Loss": train_loss, "round": round_idx})
 
-        mlops.log({"Train/Acc"+self.idx : train_acc, "round": round_idx})
-        mlops.log({"Train/Loss"+self.idx : train_loss, "round": round_idx})
-        logging.info(stats)
+        #mlops.log({"Train/Acc": train_acc, "round": round_idx})
+        #mlops.log({"Train/Loss": train_loss, "round": round_idx})
+        #logging.info(stats)
 
         stats = {"test_acc": test_acc, "test_loss": test_loss}
         if self.args.enable_wandb:
-            wandb.log({"Test/Acc"+self.idx : test_acc, "round": round_idx})
-            wandb.log({"Test/Loss"+self.idx : test_loss, "round": round_idx})
+            wandb.log({"Test/Acc": test_acc, "round": round_idx})
+            wandb.log({"Test/Loss": test_loss, "round": round_idx})
 
-        mlops.log({"Test/Acc"+self.idx : test_acc, "round": round_idx})
-        mlops.log({"Test/Loss"+self.idx : test_loss, "round": round_idx})
-        logging.info(stats)
+        #mlops.log({"Test/Acc": test_acc, "round": round_idx})
+        #mlops.log({"Test/Loss": test_loss, "round": round_idx})
+        #logging.info(stats)
 
     def test_on_local_clients(self, round_idx, train_loss_list=None):
-        logging.info("################test_on_local_clients : {}".format(round_idx))
+        #logging.info("################test_on_local_clients : {}".format(round_idx))
 
         train_metrics = {"num_samples": [], "num_correct": [], "losses": []}
 
@@ -339,18 +341,22 @@ class Cloud(HierarchicalTrainer):
             wandb.log({"Train/Acc" + " of Federation " + str(self.idx): train_acc, "round": round_idx})
             wandb.log({"Train/Loss" + " of Federation " + str(self.idx): train_loss, "round": round_idx})
 
+        """
         mlops.log({"Train/Acc" + " of Federation " + str(self.idx): train_acc, "round": round_idx})
         mlops.log({"Train/Loss" + " of Federation " + str(self.idx): train_loss, "round": round_idx})
         logging.info(stats)
+        """
 
         stats = {"test_acc": test_acc, "test_loss": test_loss}
         if self.args.enable_wandb:
             wandb.log({"Test/Acc" + " of Federation " + str(self.idx): test_acc, "round": round_idx})
             wandb.log({"Test/Loss" + " of Federation " + str(self.idx): test_loss, "round": round_idx})
 
+        """
         mlops.log({"Test/Acc" + " of Federation " + str(self.idx): test_acc, "round": round_idx})
         mlops.log({"Test/Loss" + " of Federation " + str(self.idx): test_loss, "round": round_idx})
         logging.info(stats)
+        """
 
 
     def set_test_data_dict(self, test_data_local_dict):
@@ -391,7 +397,7 @@ class Cloud(HierarchicalTrainer):
             for k in w_global.keys():
                 diff += torch.norm(w_global[k] - w_group[1][k])/torch.norm(w_global[k])
 
-            logging.info("######the gap between gloabl model and model of group {} diff = {}######".format(idx, diff))
+            #logging.info("######the gap between gloabl model and model of group {} diff = {}######".format(idx, diff))
             """
                         if self.args.enable_wandb:
                 wandb.log({"Train/Diff in Federation " + str(self.idx) + " Group " + str(idx): diff, "round": round_idx})

@@ -64,7 +64,7 @@ class Group(FedAvgAPI):
         w_group_list = []
         start_timestamp = time.time()
         for group_round_idx in range(self.args.group_comm_round):
-            logging.info("Group ID : {} / Group Communication Round : {}".format(self.idx, group_round_idx))
+            #logging.info("Group ID : {} / Group Communication Round : {}".format(self.idx, group_round_idx))
             w_locals_dict = {}
 
             # train each client

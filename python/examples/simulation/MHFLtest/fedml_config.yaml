@@ -28,7 +28,7 @@ train_args:
   group_participation_method: "uniform"
   group_num: 10
   group_comm_round: 5
-  federation_num : 4
+  federation_num : 3
   lr: 0.001
 
 validation_args:
@@ -43,9 +43,9 @@ comm_args:
 
 tracking_args:
    # When running on MLOps platform(open.fedml.ai), the default log path is at ~/fedml-client/fedml/logs/ and ~/fedml-server/fedml/logs/
-  enable_wandb: false
+  enable_wandb: true
   wandb_key: 7afc5847eb7c7a114528be19d6950cc6cbb57a31
   wandb_entity: xta_fl
   wandb_project: simulation
-  run_name: uniform_random_10pc_3FL_20C_5G_5E_1Dis
-  using_mlops: false
+  run_name: greedy_matching_config
+  using_mlops: true

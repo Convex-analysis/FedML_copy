@@ -7,6 +7,7 @@ import json
 
 import torch
 import numpy as np
+import pandas as pd
 import wandb
 
 from .client import HFLClient
@@ -195,8 +196,14 @@ class MultiHierFLTrainer():
                 group_index = tmp_stats["group_index"]
                 train_vs_diff = "Train/Acc of Gourps {}".format(group_index)
                 wandb.log({"Train/Acc": trainacc, "model_diff": diff})
+        #将cloud_train_stats_list转化为dataframe
+        df = pd.DataFrame(cloud_train_stats_list)
+        #将dataframe写入csv文件
+        df.to_csv("free3789.csv", index=False)
 
-        for i in range(3):
+
+        """
+                for i in range(3):
             tmp_cloud.append(self.federation_list[i])
         for i in range(len(self.federation_list)):
             if self.federation_list[i] in tmp_cloud:
@@ -209,9 +216,9 @@ class MultiHierFLTrainer():
                     #calculate the difference between the model parameters
                     diff = 0
                     for key in model_params.keys():
-                        diff += torch.sum(torch.abs(model_params[key] - cloud_model_params[key]))
-                    diff = diff / len(model_params.keys())
+                        diff += torch.norm(model_params[key] - cloud_model_params[key])
                     logging.info("diff between cloud {} and cloud {} is {}".format(i, cloud.idx, diff))
+        """
         logging.info("############Multi Federation Testing (END)#############")
     def test_diff_vs_acc(self):
         tmp_stats = {}
