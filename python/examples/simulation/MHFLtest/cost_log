@@ -1,0 +1,67 @@
+Type:GreedyMatching:
+the total cost of cloud 0 is 20.54012664386391
+the cost of group 4 is 2.193286258574302||the diff of group 4 is 0.20166806876659393
+the cost of group 5 is 8.290648006043792||the diff of group 5 is 0.1824949085712433
+the cost of group 8 is 6.662588981192249||the diff of group 8 is 0.2297336608171463
+
+the total cost of cloud 1 is 20.583919881607883
+the cost of group 0 is 11.091118289378162||the diff of group 0 is 0.16124731302261353
+the cost of group 6 is 4.305304251723884||the diff of group 6 is 0.1649147868156433
+
+the total cost of cloud 2 is 31.322377790046513
+the cost of group 1 is 2.6833443472182354||the diff of group 1 is 0.32389429211616516
+the cost of group 2 is 3.381878894893224||the diff of group 2 is 0.24061253666877747
+the cost of group 3 is 7.80489318266892||the diff of group 3 is 0.3115265667438507
+the cost of group 7 is 3.28426385084057||the diff of group 7 is 0.3189295828342438
+the cost of group 9 is 6.882859757192681||the diff of group 9 is 0.3385196626186371
+
+Type:ExactAuction
+the total cost of cloud 0 is 13.999009371681485
+the cost of group 4 is 2.193286258574302||the diff of group 4 is 0.1535293161869049
+the cost of group 5 is 8.290648006043792||the diff of group 5 is 0.1646459400653839
+
+the total cost of cloud 1 is 20.64819052221803
+the cost of group 0 is 11.091118289378162||the diff of group 0 is 0.16124731302261353
+the cost of group 6 is 4.305304251723884||the diff of group 6 is 0.1649147868156433
+
+the total cost of cloud 2 is 38.300432369970075
+the cost of group 1 is 2.6833443472182354||the diff of group 1 is 0.30948561429977417
+the cost of group 2 is 3.381878894893224||the diff of group 2 is 0.224678784608840
+the cost of group 3 is 7.80489318266892||the diff of group 3 is 0.30005186796188354
+the cost of group 9 is 6.882859757192681||the diff of group 9 is 0.31966155767440796
+the cost of group 7 is 3.28426385084057||the diff of group 7 is 0.3219311833381653
+the cost of group 8 is 6.662588981192249||the diff of group 8 is 0.30429941415786743
+
+Type:ExactAuctionWithOneItem
+the total cost of cloud 0 is 20.684835839599835
+the cost of group 4 is 2.193286258574302||the diff of group 4 is 0.20166806876659393
+the cost of group 5 is 8.290648006043792||the diff of group 5 is 0.1824949085712433
+the cost of group 8 is 6.662588981192249||the diff of group 8 is 0.2297336608171463
+
+the total cost of cloud 1 is 24.263013684510813
+the cost of group 0 is 11.091118289378162||the diff of group 0 is 0.23618388175964355
+the cost of group 6 is 4.305304251723884||the diff of group 6 is 0.23714983463287354
+the cost of group 7 is 3.28426385084057||the diff of group 7 is 0.22976744174957275
+
+the total cost of cloud 2 is 27.690630332829713
+the cost of group 1 is 2.6833443472182354||the diff of group 1 is 0.2679907977581024
+the cost of group 2 is 3.381878894893224||the diff of group 2 is 0.19376777112483978
+the cost of group 3 is 7.80489318266892||the diff of group 3 is 0.2835208475589752
+the cost of group 9 is 6.882859757192681||the diff of group 9 is 0.30421721935272217
+
+Type:BaseConfig
+the total cost of cloud 0 is 22.072003091581237
+the cost of group 4 is 2.193286258574302||the diff of group 4 is 0.16804032027721405
+the cost of group 5 is 8.290648006043792||the diff of group 5 is 0.21032944321632385
+the cost of group 3 is 7.80489318266892||the diff of group 3 is 0.227709099650383
+
+the total cost of cloud 1 is 27.810218473505106
+the cost of group 0 is 11.091118289378162||the diff of group 0 is 0.18293118476867676
+the cost of group 6 is 4.305304251723884||the diff of group 6 is 0.1878015697002411
+the cost of group 9 is 6.882859757192681||the diff of group 9 is 0.20571374893188477
+
+the total cost of cloud 2 is 22.542410316923373
+the cost of group 1 is 2.6833443472182354||the diff of group 1 is 0.2850106656551361
+the cost of group 2 is 3.381878894893224||the diff of group 2 is 0.25434115529060364
+the cost of group 7 is 3.28426385084057||the diff of group 7 is 0.33555978536605835
+the cost of group 8 is 6.662588981192249||the diff of group 8 is 0.3166186213493347
