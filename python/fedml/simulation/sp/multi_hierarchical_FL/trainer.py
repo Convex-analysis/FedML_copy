@@ -199,7 +199,7 @@ class MultiHierFLTrainer():
         #将cloud_train_stats_list转化为dataframe
         df = pd.DataFrame(cloud_train_stats_list)
         #将dataframe写入csv文件
-        df.to_csv("free3789.csv", index=False)
+        df.to_csv("CSG_auction.csv", index=False)
 
 
         """

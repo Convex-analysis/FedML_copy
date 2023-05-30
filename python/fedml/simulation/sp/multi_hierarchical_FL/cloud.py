@@ -77,7 +77,7 @@ class Cloud(HierarchicalTrainer):
             """
             if self.args.group_participation_method == "uniform":
                 group_to_client_indexes = self._all_group_participate_client_sampling(
-                    global_round_idx,
+                    global_round_idx+2,
                     self.group_list,
                     self.args.client_num_per_round,
                 )
@@ -175,7 +175,8 @@ class Cloud(HierarchicalTrainer):
             #group.diff = diff
         #print([(group.idx, group.diff) for group in self.group_list])
         stats_train = self.local_test_on_acc_diff(train_loss_list)
-        self._calculate_cost()
+        cost = self._calculate_cost()
+        stats_train["Cost"] = cost
         return stats_train
 
 
@@ -423,7 +424,7 @@ class Cloud(HierarchicalTrainer):
         logging.info("######the total cost of cloud {} is {}######".format(self.idx, total_cost))
         for group in self.group_list:
             logging.info("######the cost of group {} is {}||the diff of group {} is {}######".format(group.idx, group.total_cost, group.idx, group.diff))
-        return cost_list
+        return total_cost
 
     def local_test_on_acc_diff(self, train_loss_list=None):
         """
