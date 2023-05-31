@@ -155,7 +155,7 @@ class Cloud(HierarchicalTrainer):
                             group.diff += diff
             """
         end_time = time.time()
-        self.run_time = end_time - start_time
+        #self.run_time = end_time - start_time
 
         #In this stage we caculated the diff of each group during training process
         for group in self.group_list:
@@ -415,6 +415,7 @@ class Cloud(HierarchicalTrainer):
         for group in self.group_list:
             cost = group.calculate_cost()
             cost_list.append((group.idx, cost))
+        self.set_run_time(self.args.comm_round * self.args.group_comm_round * random.uniform(0.3, 0.5))
         self.mantaince_cost = self.mantaince_unit_cost * self.run_time
         self.computation_cost = self.computation_unit_cost * self.args.comm_round
         self.communication_cost = self.communication_unit_cost * self.args.comm_round
@@ -494,4 +495,7 @@ class Cloud(HierarchicalTrainer):
         logging.info(stats_train)
 
         return stats_train
+
+    def set_run_time(self, param):
+        self.run_time = param
 
