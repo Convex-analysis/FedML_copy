@@ -3,8 +3,8 @@ common_args:
   random_seed: 0
 
 data_args:
-  dataset: "mnist"
-  data_cache_dir: ~/fedml_data
+  dataset: "femnist"
+  data_cache_dir: ~/fedml_data/femnist
   partition_method: "hetero"
   partition_alpha: 0.5
 
@@ -43,9 +43,9 @@ comm_args:
 
 tracking_args:
    # When running on MLOps platform(open.fedml.ai), the default log path is at ~/fedml-client/fedml/logs/ and ~/fedml-server/fedml/logs/
-  enable_wandb: True
+  enable_wandb: False
   wandb_key: 7afc5847eb7c7a114528be19d6950cc6cbb57a31
   wandb_entity: xta_fl
   wandb_project: simulation
   run_name: CSG_auction
-  using_mlops: True
+  using_mlops: False
