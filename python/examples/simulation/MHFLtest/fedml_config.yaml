@@ -3,8 +3,8 @@ common_args:
   random_seed: 0
 
 data_args:
-  dataset: "femnist"
-  data_cache_dir: ~/fedml_data/femnist
+  dataset: "mnist"
+  data_cache_dir: ~/fedml_data/MNIST
   partition_method: "hetero"
   partition_alpha: 0.5
 
@@ -30,6 +30,9 @@ train_args:
   group_comm_round: 5
   federation_num : 3
   lr: 0.001
+
+  method: "DivFL"
+  subset_ratio: 0.1
 
 validation_args:
   frequency_of_the_test: 25

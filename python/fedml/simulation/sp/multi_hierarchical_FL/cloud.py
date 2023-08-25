@@ -87,6 +87,8 @@ class Cloud(HierarchicalTrainer):
                 self.group_list,
                 self.args.client_num_per_round,
                 )
+            elif self.args.group_participation_method == "client_selection":
+                pass
             else:
                 Exception("Unknown group participation method {}".format(self.args.group_participation_method))
             # train each group

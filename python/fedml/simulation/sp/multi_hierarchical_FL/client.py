@@ -63,3 +63,15 @@ class HFLClient(Client):
 
         """
         return w_list
+    def get_model(self):
+        """
+        get current model
+        """
+        self.model.eval()
+        return self.model
+
+    def set_model(self, model):
+        """
+        set current model for training
+        """
+        self.model.load_state_dict(model.cpu().state_dict())
