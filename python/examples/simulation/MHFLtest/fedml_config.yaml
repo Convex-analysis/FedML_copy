@@ -31,7 +31,7 @@ train_args:
   federation_num : 3
   lr: 0.001
 
-  method: "DivFL"
+  method: "Cluster2"
   subset_ratio: 0.1
 
 validation_args:

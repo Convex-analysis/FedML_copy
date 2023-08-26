@@ -4,6 +4,7 @@ import time
 
 import numpy.random
 from .ClientSelection import config
+from .ClientSelection.clustered import ClusteredSampling2
 from .ClientSelection.divfl import DivFL
 from .client import HFLClient
 from ..fedavg.fedavg_api import FedAvgAPI
@@ -27,6 +28,12 @@ class Group(FedAvgAPI):
         if args.method == 'DivFL':
             assert args.subset_ratio is not None
             self.selection_method = DivFL(**kwargs, subset_ratio=args.subset_ratio)
+        elif args.method == 'Cluster2':
+            self.selection_method = ClusteredSampling2(**kwargs, dist='L1')
+
+        if args.method in config.NEED_SETUP_METHOD:
+            self.selection_method.setup(train_data_local_dict)
+
         self.idx = idx
         self.args = args
         self.device = device
@@ -86,9 +93,10 @@ class Group(FedAvgAPI):
                 self.selection_method.init(self.w_group, local_models)
                 del local_models
 
+
+
             if self.args.method in config.PRE_SELECTION_METHOD:
                 sampled_client_list = self.selection_method.select(self.args.client_num_per_round, sampled_client_list, None)
-                print(sampled_client_list)
 
             # train each client
             for client in sampled_client_list:
@@ -108,21 +116,27 @@ class Group(FedAvgAPI):
                     local_models = [self.client_dict[idx].get_model() for idx in client_indices]
                     selected_client_indices = self.selection_method.select(**kwargs, metric=local_models)
                     del local_models
-                print(selected_client_indices)
+                #print(selected_client_indices)
 
 
             # aggregate local weights
             for global_epoch in sorted(w_locals_dict.keys()):
-                if self.selection_method is not None:
-                    selected_c = [self.client_dict[idx] for idx in selected_client_indices]
-                    w_locals = [zip(client.get_sample_number(),client.get_model().state_dict())for client in selected_c]
-                else:
-                    w_locals = w_locals_dict[global_epoch]
+                w_locals = w_locals_dict[global_epoch]
                 w_group_list.append((global_epoch, self._aggregate(w_locals)))
             if w_group_list == []:
                 pass
             # update the group weight
-            w_group = w_group_list[-1][1]
+            if self.selection_method is not None:
+                # 便利所有的client，如果client的id在selected_client_indices中，就将其加入到w_locals中
+                w_locals = []
+                for id in selected_client_indices:
+                    client = sampled_client_list[id]
+                    w_locals.append((client.get_sample_number(),
+                                        client.model.state_dict()))
+                print(len(w_locals))
+                w_group = self._aggregate(w_locals)
+            else:
+                w_group = w_group_list[-1][1]
         self.w_group.load_state_dict(w_group)
         end_timestamp = time.time()
         random.seed(self.idx)
