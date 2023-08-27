@@ -4,6 +4,7 @@ https://github.com/Accenture/Labs-Federated-Learning/tree/clustered_sampling
 '''
 from itertools import product
 from scipy.cluster.hierarchy import fcluster, linkage
+from scipy.spatial.distance import squareform
 from copy import deepcopy
 from tqdm import tqdm
 import torch
@@ -85,6 +86,7 @@ class ClusteredSampling2(ClientSelection):
         sim_matrix = self.get_matrix_similarity_from_grads(
             self.gradients, distance_type=self.distance_type)
         # GET THE DENDROGRAM TREE ASSOCIATED
+        sim_matrix = squareform(sim_matrix)
         linkage_matrix = linkage(sim_matrix, "ward")
 
         distri_clusters = self.get_clusters_with_alg2(linkage_matrix, n, self.weights)
@@ -192,7 +194,7 @@ class ClusteredSampling2(ClientSelection):
         for i in range(n_clusters):
             pop_clusters[i, 0] = i + 1
             for client in np.where(clusters == i + 1)[0]:
-                pop_clusters[i, 1] += int(weights[client] * epsilon * n_sampled)
+                pop_clusters[i, 1] += np.int(weights[client] * epsilon * n_sampled)
 
         pop_clusters = pop_clusters[pop_clusters[:, 1].argsort()]
 

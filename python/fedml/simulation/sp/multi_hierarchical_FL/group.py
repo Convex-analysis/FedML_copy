@@ -32,7 +32,7 @@ class Group(FedAvgAPI):
             self.selection_method = ClusteredSampling2(**kwargs, dist='L1')
 
         if args.method in config.NEED_SETUP_METHOD:
-            self.selection_method.setup(train_data_local_dict)
+            self.selection_method.setup(train_data_local_num_dict)
 
         self.idx = idx
         self.args = args
@@ -87,6 +87,7 @@ class Group(FedAvgAPI):
             w_locals_dict = {}
             #TODO client selecttion method
             ###
+            client_indices = [client.client_idx for client in sampled_client_list]
             # sampled_client_indexes is the client ids of this group
             if self.args.method in config.NEED_INIT_METHOD:
                 local_models = [client.get_model() for client in sampled_client_list]
@@ -96,7 +97,7 @@ class Group(FedAvgAPI):
 
 
             if self.args.method in config.PRE_SELECTION_METHOD:
-                sampled_client_list = self.selection_method.select(self.args.client_num_per_round, sampled_client_list, None)
+                sampled_client_list = self.selection_method.select(self.args.client_num_per_round, client_indices, None)
 
             # train each client
             for client in sampled_client_list:
@@ -105,7 +106,7 @@ class Group(FedAvgAPI):
                     if not global_epoch in w_locals_dict:
                         w_locals_dict[global_epoch] = []
                     w_locals_dict[global_epoch].append((client.get_sample_number(), w))
-            client_indices = [client.client_idx for client in sampled_client_list]
+
 
             #训练后利用model选择
             if self.args.method not in config.PRE_SELECTION_METHOD:
