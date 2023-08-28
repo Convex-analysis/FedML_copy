@@ -6,6 +6,8 @@ import numpy.random
 from .ClientSelection import config
 from .ClientSelection.clustered import ClusteredSampling2
 from .ClientSelection.divfl import DivFL
+from .ClientSelection.grad import GradNorm
+from .ClientSelection.loss_based import PowerOfChoice
 from .client import HFLClient
 from ..fedavg.fedavg_api import FedAvgAPI
 
@@ -30,7 +32,9 @@ class Group(FedAvgAPI):
             self.selection_method = DivFL(**kwargs, subset_ratio=args.subset_ratio)
         elif args.method == 'Cluster2':
             self.selection_method = ClusteredSampling2(**kwargs, dist='L1')
-
+        elif args.method == 'Pow-d':
+#            assert args.num_candidates is not None
+            self.selection_method = PowerOfChoice(**kwargs, d=30)
         if args.method in config.NEED_SETUP_METHOD:
             self.selection_method.setup(train_data_local_num_dict)
 
@@ -72,8 +76,9 @@ class Group(FedAvgAPI):
         return self.group_sample_number
 
     def train(self, global_round_idx, w, sampled_client_indexes):
-        selected_client_indices = []
-        sampled_client_list = [self.client_dict[client_idx] for client_idx in sampled_client_indexes]
+        selected_client_indices = [] #初始化客户端选择的结果的list
+        sampled_client_list = [self.client_dict[client_idx] for client_idx in sampled_client_indexes]#如果不需要客户端选择，就将随机选择的结果中属于该group的客户端加入到sampled_client_list中
+        selected_client_num = len(sampled_client_list)#存储该group的被选择客户端数量
         #如果设置了客户端选择，就取消之前的随机选择，将客户端list初始化为所有客户端
         if self.selection_method is not None:
             #let self.client_dict to a list
@@ -85,19 +90,26 @@ class Group(FedAvgAPI):
         for group_round_idx in range(self.args.group_comm_round):
             #logging.info("Group ID : {} / Group Communication Round : {}".format(self.idx, group_round_idx))
             w_locals_dict = {}
-            #TODO client selecttion method
-            ###
-            client_indices = [client.client_idx for client in sampled_client_list]
+            #client selecttion method
+            client_indices = [client.client_idx for client in sampled_client_list] #把该组所有的client的id放入client_indices中
             # sampled_client_indexes is the client ids of this group
             if self.args.method in config.NEED_INIT_METHOD:
                 local_models = [client.get_model() for client in sampled_client_list]
                 self.selection_method.init(self.w_group, local_models)
                 del local_models
-
-
-
+            # Prepare for PoW-d client selection
+            if self.args.method in config.CANDIDATE_SELECTION_METHOD:
+                # np.random.seed((self.args.seed+1)*10000000 + round_idx)
+                #print(f'> candidate client selection {self.args.num_candidates}/{len(client_indices)}')
+                client_indices = self.selection_method.select_candidates(client_indices, selected_client_num)
+            # Prepare for Cluster2 client selection
             if self.args.method in config.PRE_SELECTION_METHOD:
-                sampled_client_list = self.selection_method.select(self.args.client_num_per_round, client_indices, None)
+                pre_selected_client_indices = self.selection_method.select(selected_client_num, client_indices, None)
+                temp_selected_client = []
+                for client in sampled_client_list:
+                    if client.client_idx in pre_selected_client_indices:
+                        temp_selected_client.append(client)
+                sampled_client_list = temp_selected_client
 
             # train each client
             for client in sampled_client_list:
@@ -111,8 +123,9 @@ class Group(FedAvgAPI):
             #训练后利用model选择
             if self.args.method not in config.PRE_SELECTION_METHOD:
                 #print(f'> post-client selection {self.num_clients_per_round}/{len(client_indices)}')
-                kwargs = {'n': len(sampled_client_indexes), 'client_idxs': client_indices, 'round': group_round_idx}
+                kwargs = {'n': selected_client_num, 'client_idxs': client_indices, 'round': group_round_idx}
                 # select by local models(gradients)
+                # Prepare for DivFL client selection
                 if self.args.method in config.NEED_LOCAL_MODELS_METHOD:
                     local_models = [self.client_dict[idx].get_model() for idx in client_indices]
                     selected_client_indices = self.selection_method.select(**kwargs, metric=local_models)
@@ -127,7 +140,8 @@ class Group(FedAvgAPI):
             if w_group_list == []:
                 pass
             # update the group weight
-            if self.selection_method is not None:
+            # 由于DivFL需要所有客户端先训练然后再选择，所以在这里需要把对应的客户端模型选出来进行聚合并产生下一轮的w_group
+            if self.selection_method is "DivFL":
                 # 便利所有的client，如果client的id在selected_client_indices中，就将其加入到w_locals中
                 w_locals = []
                 for id in selected_client_indices:
@@ -136,7 +150,7 @@ class Group(FedAvgAPI):
                                         client.model.state_dict()))
                 print(len(w_locals))
                 w_group = self._aggregate(w_locals)
-            else:
+            else:#其他方法只训练的选择的客户端，可以直接从w_group_list中取出最后一个w_group
                 w_group = w_group_list[-1][1]
         self.w_group.load_state_dict(w_group)
         end_timestamp = time.time()

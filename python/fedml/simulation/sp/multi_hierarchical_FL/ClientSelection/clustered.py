@@ -228,6 +228,9 @@ class ClusteredSampling2(ClientSelection):
         distri_clusters = distri_clusters.astype(float)
         print(distri_clusters.shape)
         for l in range(n_sampled):
-            distri_clusters[l] /= np.sum(distri_clusters[l])
+            if np.sum(distri_clusters[l]) > 0:
+                distri_clusters[l] /= np.sum(distri_clusters[l])
+            elif np.sum(distri_clusters[l]) == 0:
+                distri_clusters[l] = np.ones(len(distri_clusters[l])) / len(distri_clusters[l])
 
         return distri_clusters
