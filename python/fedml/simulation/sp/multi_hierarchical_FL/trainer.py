@@ -17,13 +17,15 @@ from .group import Group
 
 from fedml.ml.trainer.trainer_creator import create_model_trainer
 
-#解析json文件，返回一个字典
+
+# 解析json文件，返回一个字典
 def parse_json_file(json_file):
     root = os.getcwd()
 
     with open(os.path.join(root, json_file), "r") as f:
         data = json.load(f)
     return data
+
 
 # 利用这个traininer初始化所有的HFLtrainer，分配客户端和数据
 class MultiHierFLTrainer():
@@ -46,7 +48,7 @@ class MultiHierFLTrainer():
         self.val_global = None
         self.train_data_num_in_total = train_data_num
         self.test_data_num_in_total = test_data_num
-        
+
         self.client_list = []
         self.train_data_local_num_dict = train_data_local_num_dict
         self.train_data_local_dict = train_data_local_dict
@@ -54,7 +56,7 @@ class MultiHierFLTrainer():
 
         logging.info("model = {}".format(model))
         self.model_trainer = create_model_trainer(model, args)
-        #self.model_trainer = None
+        # self.model_trainer = None
         self.model = model
         logging.info("self.model_trainer = {}".format(self.model_trainer))
 
@@ -71,7 +73,7 @@ class MultiHierFLTrainer():
             self._setup_groups_for_MHFL()
         elif self.args.group_partition_type == "constant":
             self._setup_groups_for_MHFL_from_file()
-        
+
     # resign all client to corresponding groups
     def _setup_clients_for_MHFL(
             self, train_data_local_num_dict, train_data_local_dict, test_data_local_dict
@@ -152,7 +154,7 @@ class MultiHierFLTrainer():
             group_list = []
             idx = federation[1]["id"]
             tmp_group_list = federation[1]["member"]
-            if idx <= len(self.federation_list)-1:
+            if idx <= len(self.federation_list) - 1:
                 cloud = self.federation_list[idx]
                 for group_idx in tmp_group_list:
                     group_list.append(self.group_dict[group_idx])
@@ -165,13 +167,13 @@ class MultiHierFLTrainer():
         logging.info("############setup_federations_for_MHFL (START)#############")
         list_of_federation = []
         for i in range(federation_num):
-            #test_client_list = copy.deepcopy(self.client_list)
+            # test_client_list = copy.deepcopy(self.client_list)
             test_client_list = self.client_list
             model = copy.deepcopy(self.model)
-            #model = self.model
-            #model_trainer = copy.deepcopy(self.model_trainer)
+            # model = self.model
+            # model_trainer = copy.deepcopy(self.model_trainer)
             model_trainer = self.model_trainer
-            list_of_federation.append(Cloud(i, self.args,  self.device, model, model_trainer, test_client_list))
+            list_of_federation.append(Cloud(i, self.args, self.device, model, model_trainer, test_client_list))
         for hfl in list_of_federation:
             hfl.set_test_data_dict(self.test_data_local_dict)
             hfl.set_train_data_local_num_dict(self.train_data_local_num_dict)
@@ -188,7 +190,7 @@ class MultiHierFLTrainer():
             logging.info("############Training Cloud {} (START)#############".format(hfl.idx))
             cloud_train_stats_list.append(hfl.train())
         logging.info("############Multi Federation Training (END)#############")
-        #self.test_diff_vs_acc()
+        # self.test_diff_vs_acc()
         logging.info("############Multi Federation Testing (START)#############")
         for tmp_stats in cloud_train_stats_list:
             if self.args.enable_wandb:
@@ -197,14 +199,14 @@ class MultiHierFLTrainer():
                 group_index = tmp_stats["group_index"]
                 train_vs_diff = "Train/Acc of Gourps {}".format(group_index)
                 wandb.log({"Train/Acc": trainacc, "model_diff": diff})
-        #将cloud_train_stats_list转化为dataframe
+        # 将cloud_train_stats_list转化为dataframe
         df = pd.DataFrame(cloud_train_stats_list)
-        #将dataframe写入csv文件
-        #将本地时间作为文件名
+        # 将dataframe写入csv文件
+        # 将本地时间作为文件名
         localtime = time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())
-        log_result_csv = self.args.federation_num + "federations-" + self.args.dataset + "-" + self.args.method + "-" +self.args.group_participation_method + "-" + localtime +"-result.csv"
+        log_result_csv = str(self.args.federation_num) + "federations-" + str(self.args.dataset) + "-" + str(
+            self.args.method) + "-" + str(self.args.group_participation_method) + "-" + str(localtime) + "-result.csv"
         df.to_csv(log_result_csv, index=False)
-
 
         """
                 for i in range(3):
@@ -224,6 +226,7 @@ class MultiHierFLTrainer():
                     logging.info("diff between cloud {} and cloud {} is {}".format(i, cloud.idx, diff))
         """
         logging.info("############Multi Federation Testing (END)#############")
+
     def test_diff_vs_acc(self):
         tmp_stats = {}
         group_index = []
@@ -236,23 +239,22 @@ class MultiHierFLTrainer():
                 group_index = tmp_stats["group_index"]
                 train_vs_diff = "Train/Acc of Gourps {}".format(group_index)
                 wandb.log({"Train/Acc": trainacc, "model_diff": diff})
-        #遍历federation_list的第一到三个元素
+        # 遍历federation_list的第一到三个元素
         for i in range(3):
             tmp_stats.append(self.federation_list[i])
         for i in range(len(self.federation_list)):
             if self.federation_list[i] in tmp_stats:
                 pass
             else:
-                #get model parameters
+                # get model parameters
                 model_params = self.federation_list[i].model.state_dict()
                 for cloud in tmp_stats:
                     cloud_model_params = cloud.model.state_dict()
-                    #calculate the difference between the model parameters
+                    # calculate the difference between the model parameters
                     diff = 0
                     for key in model_params.keys():
                         diff += torch.sum(torch.abs(model_params[key] - cloud_model_params[key]))
                     diff = diff / len(model_params.keys())
                     logging.info("diff between cloud {} and cloud {} is {}".format(i, cloud.idx, diff))
-
 
         logging.info("############Multi Federation Testing (END)#############")

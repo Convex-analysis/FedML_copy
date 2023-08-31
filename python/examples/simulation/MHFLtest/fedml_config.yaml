@@ -28,7 +28,7 @@ train_args:
   group_participation_method: "random"
   group_num: 10
   group_comm_round: 5
-  federation_num : 48
+  federation_num : 1
   lr: 0.001
 
   method: "DivFL"
