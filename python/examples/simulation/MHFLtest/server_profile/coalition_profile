@@ -1,0 +1,47 @@
+[7,8,9]
+diff between cloud 3 and cloud 0 is 1.0369727611541748
+diff between cloud 3 and cloud 1 is 1.404167890548706
+diff between cloud 3 and cloud 2 is 1.1899493932724
+[7] [8,9]
+[7]
+diff between cloud 3 and cloud 0 is 1.3182278871536255
+diff between cloud 3 and cloud 1 is 1.823556900024414
+diff between cloud 3 and cloud 2 is 0.8123353123664856
+[8,9]
+diff between cloud 4 and cloud 0 is 1.5445443391799927
+diff between cloud 4 and cloud 1 is 1.4642888307571411
+diff between cloud 4 and cloud 2 is 1.8625532388687134
+
+[8] [7,9]
+[8]
+diff between cloud 3 and cloud 0 is 1.722974181175232
+diff between cloud 3 and cloud 1 is 1.5639084577560425
+diff between cloud 3 and cloud 2 is 1.9278888702392578
+[7,9]
+diff between cloud 4 and cloud 0 is 1.3052641153335571
+diff between cloud 4 and cloud 1 is 1.6364102363586426
+diff between cloud 4 and cloud 2 is 1.274160385131836
+
+[9] [7,8]
+[9]
+diff between cloud 3 and cloud 0 is 2.0528361797332764
+diff between cloud 3 and cloud 1 is 2.217797040939331
+diff between cloud 3 and cloud 2 is 2.5912935733795166
+[7,8]
+diff between cloud 4 and cloud 0 is 0.9251533150672913
+diff between cloud 4 and cloud 1 is 1.5563898086547852
+diff between cloud 4 and cloud 2 is 0.9207829236984253
+
+[7] [8] [9]
+[7]
+diff between cloud 3 and cloud 0 is 1.3182278871536255
+diff between cloud 3 and cloud 1 is 1.823556900024414
+diff between cloud 3 and cloud 2 is 0.8123353123664856
+[8]
+diff between cloud 3 and cloud 0 is 1.722974181175232
+diff between cloud 3 and cloud 1 is 1.5639084577560425
+diff between cloud 3 and cloud 2 is 1.9278888702392578
+[9]
+diff between cloud 3 and cloud 0 is 2.0528361797332764
+diff between cloud 3 and cloud 1 is 2.217797040939331
+diff between cloud 3 and cloud 2 is 2.5912935733795166

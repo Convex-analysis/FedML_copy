@@ -1,0 +1,42 @@
+cloud0
+local:{'training_acc': 0.7578967642526965, 'training_loss': 1.8836421599304547, 'diff': 0.159, 'group_index': [4, 5]}
+global:{'training_acc': 0.7084522573949144, 'training_loss': 1.9150578365653954}
+######the cost of group 4 is 2.193286258574302||the diff of group 4 is 0.1535293161869049######
+######the cost of group 5 is 8.290648006043792||the diff of group 5 is 0.1646459400653839######
+
+cloud1
+local:{'training_acc': 0.6457375402991385, 'training_loss': 1.9262925101967154, 'diff': 0.1765, 'group_index': [0, 3, 6]}
+global:{'training_acc': 0.5936526984950701, 'training_loss': 1.9590095538079553}
+######the cost of group 0 is 11.091118289378162||the diff of group 0 is 0.15571428835391998######
+######the cost of group 3 is 7.80489318266892||the diff of group 3 is 0.20834752917289734######
+######the cost of group 6 is 4.305304251723884||the diff of group 6 is 0.165559321641922######
+
+cloud2
+local:{'training_acc': 0.7716687230104874, 'training_loss': 1.8998512268287029, 'diff': 0.1582, 'group_index': [1, 2]}
+global:{'training_acc': 0.7432051115723923, 'training_loss': 1.9238487688634114}
+######the cost of group 1 is 2.6833443472182354||the diff of group 1 is 0.18092165887355804######
+######the cost of group 2 is 3.381878894893224||the diff of group 2 is 0.135514497756958######
+
+
+相对合理的基础配置
+[4,5,7]  [0,3,6,9] [1,2,8]
+{'training_acc': 0.6718198135603034, 'training_loss': 1.9013573514118254, 'diff': 0.2284, 'group_index': [4, 5, 7]}
+######the total cost of cloud 0 is 17.756885972004202######
+######the cost of group 4 is 2.193286258574302||the diff of group 4 is 0.2217600792646408######
+######the cost of group 5 is 8.290648006043792||the diff of group 5 is 0.23930105566978455######
+######the cost of group 7 is 3.28426385084057||the diff of group 7 is 0.2243724763393402######
+
+
+{'training_acc': 0.6526160648489314, 'training_loss': 1.9457607391351448, 'diff': 0.1915, 'group_index': [0, 3, 6, 9]}
+######the total cost of cloud 1 is 35.6722063575193######
+######the cost of group 0 is 11.091118289378162||the diff of group 0 is 0.19583043456077576######
+######the cost of group 3 is 7.80489318266892||the diff of group 3 is 0.19917088747024536######
+######the cost of group 6 is 4.305304251723884||the diff of group 6 is 0.18783438205718994######
+######the cost of group 9 is 6.882859757192681||the diff of group 9 is 0.18324363231658936######
+
+
+{'training_acc': 0.6606966904306497, 'training_loss': 1.9218407775439132, 'diff': 0.2396, 'group_index': [1, 2, 8]}
+######the total cost of cloud 2 is 18.601371256747953######
+######the cost of group 1 is 2.6833443472182354||the diff of group 1 is 0.21588198840618134######
+######the cost of group 2 is 3.381878894893224||the diff of group 2 is 0.21877121925354004######
+######the cost of group 8 is 6.662588981192249||the diff of group 8 is 0.28428342938423157######

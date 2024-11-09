@@ -1,0 +1,95 @@
+[4,5]+
+local
+[7,8,9]
+{'training_acc': 0.6567254408060453, 'training_loss': 1.924270132418744, 'diff': 0.2646, 'group_index': [4, 5, 7, 8, 9]}
+[7,8]
+{'training_acc': 0.6704861755427723, 'training_loss': 1.9226853572320222, 'diff': 0.2701, 'group_index': [4, 5, 7, 8]}
+[7,9]
+{'training_acc': 0.640133385641428, 'training_loss': 1.914202464244187, 'diff': 0.2786, 'group_index': [4, 5, 7, 9]}
+[8,9]
+{'training_acc': 0.6514767563788885, 'training_loss': 1.9216501602069018, 'diff': 0.2256, 'group_index': [4, 5, 8, 9]}
+[7]
+{'training_acc': 0.6718198135603034, 'training_loss': 1.9013573514118254, 'diff': 0.2284, 'group_index': [4, 5, 7]}
+[8]
+{'training_acc': 0.7199536437384961, 'training_loss': 1.9094968387479065, 'diff': 0.2046, 'group_index': [4, 5, 8]}
+[9]
+{'training_acc': 0.6679567811643283, 'training_loss': 1.9149752764626742, 'diff': 0.2145, 'group_index': [4, 5, 9]}
+global
+[7,8,9]
+{'training_acc': 0.6486442656979762, 'training_loss': 1.9300392409588427}
+[7,8]
+{'training_acc': 0.6609853399065906, 'training_loss': 1.9289433629124908}
+[7,9]
+{'training_acc': 0.6206214322781526, 'training_loss': 1.9247498120232975}
+[8,9]
+{'training_acc': 0.6284379865075247, 'training_loss': 1.9315405705248716}
+[7]
+
+[8]
+
+[9]
+
+
+
+[0,3,6]+
+local
+[7,8,9]
+{'training_acc': 0.6360931300897891, 'training_loss': 1.9474986071880587, 'diff': 0.2125, 'group_index': [0, 3, 6, 7, 8, 9]}
+[7,8]
+{'training_acc': 0.6505499617851328, 'training_loss': 1.9361277440013143, 'diff': 0.2093, 'group_index': [0, 3, 6, 7, 8]}
+[7,9]
+{'training_acc': 0.6381109119228847, 'training_loss': 1.941525561714178, 'diff': 0.22, 'group_index': [0, 3, 6, 7, 9]}
+[8,9]
+{'training_acc': 0.6312808273667462, 'training_loss': 1.9602646983798382, 'diff': 0.1885, 'group_index': [0, 3, 6, 8, 9]}
+[7]
+{'training_acc': 0.7138484190948543, 'training_loss': 1.9240735054191638, 'diff': 0.216, 'group_index': [0, 3, 6, 7]}
+[8]
+{'training_acc': 0.6779712143411186, 'training_loss': 1.9321542282685178, 'diff': 0.1844, 'group_index': [0, 3, 6, 8]}
+[9]
+{'training_acc': 0.6526160648489314, 'training_loss': 1.9457607391351448, 'diff': 0.1915, 'group_index': [0, 3, 6, 9]}
+global
+[7,8,9]
+{'training_acc': 0.6262487026466009, 'training_loss': 1.9538516683004252}
+[7,8]
+{'training_acc': 0.6252270368448365, 'training_loss': 1.9529008394929803}
+[7,9]
+{'training_acc': 0.6296218214841723, 'training_loss': 1.948683165470027}
+[8,9]
+{'training_acc': 0.6350544888427607, 'training_loss': 1.9817729898717313}
+[7]
+
+[8]
+
+[9]
+
+
+
+[1,2]+
+[7,8,9]
+{'training_acc': 0.6565715875027041, 'training_loss': 1.9193556854598819, 'diff': 0.3129, 'group_index': [1, 2, 7, 8, 9]}
+[7,8]
+{'training_acc': 0.6539353769676884, 'training_loss': 1.9148040417165133, 'diff': 0.2978, 'group_index': [1, 2, 7, 8]}
+[7,9]
+{'training_acc': 0.6665241860796467, 'training_loss': 1.9169776238394385, 'diff': 0.3087, 'group_index': [1, 2, 7, 9]}
+[8,9]
+{'training_acc': 0.6397220477386935, 'training_loss': 1.9307758782629916, 'diff': 0.2685, 'group_index': [1, 2, 8, 9]}
+[7]
+{'training_acc': 0.7323092420045328, 'training_loss': 1.8820320058667488, 'diff': 0.273, 'group_index': [1, 2, 7]}
+[8]
+{'training_acc': 0.6606966904306497, 'training_loss': 1.9218407775439132, 'diff': 0.2396, 'group_index': [1, 2, 8]}
+[9]
+{'training_acc': 0.6755557653277954, 'training_loss': 1.903897366731024, 'diff': 0.2425, 'group_index': [1, 2, 9]}
+global
+[7,8,9]
+{'training_acc': 0.6576122210690192, 'training_loss': 1.9211661630229406}
+[7,8]
+{'training_acc': 0.670423585884795, 'training_loss': 1.9232717098703982}
+[7,9]
+{'training_acc': 0.6587798391281785, 'training_loss': 1.9179356113660038}
+[8,9]
+{'training_acc': 0.6245945770627919, 'training_loss': 1.9288296809716736}
+[7]
+
+[8]
+
+[9]

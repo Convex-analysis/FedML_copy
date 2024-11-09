@@ -2,11 +2,11 @@ import sys
 
 import fedml
 
-#from FedML_copy.python.fedml import FedMLRunner
+# from FedML_copy.python.fedml import FedMLRunner
 
-sys.path.append("../../../fedml/")
+sys.path.append("../../../../")
+print(sys.path)
 from python.fedml import FedMLRunner
-
 
 if __name__ == "__main__":
     # init FedML framework
