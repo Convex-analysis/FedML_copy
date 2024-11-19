@@ -120,10 +120,10 @@ class Group(FedAvgAPI):
             # train each client
             for client in client_selected_results:
                 w_local_list = client.train(global_round_idx, group_round_idx, w_group)
-                for global_epoch, w in w_local_list:
+                for global_epoch, w_temp in w_local_list:
                     if not global_epoch in w_locals_dict:
                         w_locals_dict[global_epoch] = []
-                    w_locals_dict[global_epoch].append((client.get_sample_number(), w))
+                    w_locals_dict[global_epoch].append((client.get_sample_number(), w_temp))
 
 
             #训练后利用model选择
