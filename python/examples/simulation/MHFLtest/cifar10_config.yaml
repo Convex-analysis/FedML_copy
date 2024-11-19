@@ -9,7 +9,7 @@ data_args:
   partition_alpha: 0.1
 
 model_args:
-  model: "mobilenet_v3"
+  model: "cnn_web"
 
 train_args:
   federated_optimizer: "Multi-HierFL"
@@ -20,8 +20,7 @@ train_args:
   epochs: 5
   batch_size: 10
   client_optimizer: sgd
-  learning_rate: 0.03
-  weight_decay: 0.001
+  
   group_method: "random"
   group_partition_type: "constant"
   group_partition_file: "all_group_partation.json"
@@ -30,6 +29,9 @@ train_args:
   group_comm_round: 5
   federation_num : 6
   lr: 0.03
+  wd: 0.001
+  learning_rate: 0.03
+  weight_decay: 0.001
   #client selection method: RC denotes random client selection
   method: "RC"
   subset_ratio: 0.1

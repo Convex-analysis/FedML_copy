@@ -73,6 +73,8 @@ class MultiHierFLTrainer():
             self._setup_groups_for_MHFL()
         elif self.args.group_partition_type == "constant":
             self._setup_groups_for_MHFL_from_file()
+        elif self.args.group_partition_type == "profile":
+            self._setup_groups_for_MHFL_from_profile()
 
     # resign all client to corresponding groups
     def _setup_clients_for_MHFL(
@@ -161,6 +163,21 @@ class MultiHierFLTrainer():
                 cloud.set_group_list(group_list)
                 cloud.set_group_indexes(group_list)
         logging.info("############_setup_groups_for_MHFL_from_file (END)#############")
+
+    def _setup_groups_for_MHFL_from_profile(self):
+        logging.info("############_setup_groups_for_MHFL_from_profile (START)#############")
+        group_list_in_profile = self.args.group_profile
+        if len(group_list_in_profile) < 1:
+            raise Exception("At least one group should be assigned to each cloud")
+        if len(self.federation_list) != 1:
+            raise Exception("Only one cloud is supported in this method")
+        cloud = self.federation_list[0]
+        group_list = []
+        for group_idx in group_list_in_profile:
+            group_list.append(self.group_dict[group_idx])
+        cloud.set_group_list(group_list)
+        cloud.set_group_indexes(group_list)
+        logging.info("############_setup_groups_for_MHFL_from_profile (END)#############")
 
     # setting up federations in our simulation
     def _setup_federations(self, federation_num):
