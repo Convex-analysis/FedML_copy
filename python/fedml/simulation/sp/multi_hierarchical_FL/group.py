@@ -1,3 +1,4 @@
+import copy
 import logging
 import random
 import time
@@ -80,7 +81,7 @@ class Group(FedAvgAPI):
         sampled_client_list = [self.client_dict[client_idx] for client_idx in sampled_client_indexes]#如果不需要客户端选择，就将随机选择的结果中属于该group的客户端加入到sampled_client_list中
         selected_client_num = len(sampled_client_list)#存储该group的被选择客户端数量
         #如果设置了客户端选择，就取消之前的随机选择，将客户端list初始化为所有客户端
-        if self.selection_method is not 'RC':
+        if self.selection_method is not None:
             #let self.client_dict to a list 这个不能变
             sampled_client_list = list(self.client_dict.values())
 
@@ -120,10 +121,10 @@ class Group(FedAvgAPI):
             # train each client
             for client in client_selected_results:
                 w_local_list = client.train(global_round_idx, group_round_idx, w_group)
-                for global_epoch, w in w_local_list:
+                for global_epoch, w_temp in w_local_list:
                     if not global_epoch in w_locals_dict:
                         w_locals_dict[global_epoch] = []
-                    w_locals_dict[global_epoch].append((client.get_sample_number(), w))
+                    w_locals_dict[global_epoch].append((client.get_sample_number(), w_temp))
 
 
             #训练后利用model选择
