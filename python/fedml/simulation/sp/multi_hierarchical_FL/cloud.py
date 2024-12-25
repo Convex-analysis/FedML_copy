@@ -103,11 +103,11 @@ class Cloud(HierarchicalTrainer):
                     w_group_list = group.train(
                         global_round_idx, w_global, sampled_client_indexes
                     )
-                    for global_epoch, w in w_group_list:
+                    for global_epoch, gww in w_group_list:
                         if not global_epoch in w_groups_dict:
                             w_groups_dict[global_epoch] = []
                         w_groups_dict[global_epoch].append(
-                            (group.get_sample_number(sampled_client_indexes), w)
+                            (group.get_sample_number(sampled_client_indexes), gww)
                         )
 
 
