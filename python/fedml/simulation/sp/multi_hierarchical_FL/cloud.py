@@ -13,6 +13,15 @@ from fedml import mlops
 from .group import Group
 from ..hierarchical_fl.trainer import HierarchicalTrainer
 
+def get_model_diff(model1, model2):
+        """
+        measure the difference from w_global and each group model
+        """
+        diff = 0
+        for p1, p2 in zip(model1.parameters(), model2.parameters()): 
+            diff += torch.sum(torch.abs(p1 - p2)).item() 
+        return diff
+
 
 def generate_array_with_constant_sum(n, total_sum):
     # initialize array with all 1's
@@ -63,18 +72,19 @@ class Cloud(HierarchicalTrainer):
         self.group_indexes = client_to_group_indexes
 
     def train(self):
+        origin_model = copy.deepcopy(self.model)
         train_loss_list = []
         w_global = self.model.state_dict()
         group_diff_dict = {}
         start_time = time.time()
         for global_round_idx in range(self.args.comm_round):
-            """
+
             logging.info(
                 "################Global Communication Round : {}".format(
                     global_round_idx
                 )
             )
-            """
+
             if self.args.group_participation_method == "uniform":
                 group_to_client_indexes = self._all_group_participate_client_sampling(
                     global_round_idx+2,
@@ -124,13 +134,12 @@ class Cloud(HierarchicalTrainer):
                 """
                 # evaluate performance
                 if (
-                        global_epoch == 0
-                        or (global_epoch + 1) % self.args.frequency_of_the_test == 0
+                        global_epoch == 1
+                        or (global_epoch) % self.args.frequency_of_the_test == 0
                         or global_epoch
                         == self.args.comm_round
                         * self.args.group_comm_round
                         * self.args.epochs
-                        - 1
                 ):
                     self.model.load_state_dict(w_global)
                     if not global_epoch in w_groups_dict:
@@ -157,6 +166,8 @@ class Cloud(HierarchicalTrainer):
                             group.diff += diff
             """
         end_time = time.time()
+        entire_diff = get_model_diff(origin_model, self.model)
+        logging.info("After training Cloud {} original model have changed {} comparing with original one.".format(self.idx, entire_diff))
         #self.run_time = end_time - start_time
 
         #In this stage we caculated the diff of each group during training process
@@ -175,7 +186,7 @@ class Cloud(HierarchicalTrainer):
                 #    diff = float(item)
             group.diff = diff/self.args.comm_round
             #group.diff = diff
-        #print([(group.idx, group.diff) for group in self.group_list])
+        print([(group.idx, group.diff) for group in self.group_list])
         stats_train = self.local_test_on_acc_diff(train_loss_list)
         cost = self._calculate_cost()
         stats_train["Cost"] = cost
@@ -398,9 +409,9 @@ class Cloud(HierarchicalTrainer):
         for idx, w_group in zip(train_order, w_groups):
             diff = 0
             for k in w_global.keys():
-                diff += torch.norm(w_global[k] - w_group[1][k])/torch.norm(w_global[k])
-
-            #logging.info("######the gap between gloabl model and model of group {} diff = {}######".format(idx, diff))
+                #diff += torch.norm(w_global[k] - w_group[1][k])/torch.norm(w_global[k])
+                diff += torch.norm(w_global[k] - w_group[1][k])
+            logging.info("######the gap between gloabl model and model of group {} diff = {}######".format(idx, diff))
             """
                         if self.args.enable_wandb:
                 wandb.log({"Train/Diff in Federation " + str(self.idx) + " Group " + str(idx): diff, "round": round_idx})
@@ -452,6 +463,8 @@ class Cloud(HierarchicalTrainer):
         
         """
         avg_diff = sum([group.diff for group in self.group_list]) / len(self.group_list)
+        if avg_diff == numpy.NaN:
+            avg_diff = 0
         avg_diff = int(avg_diff * 10000) / 10000.0
 
         logging.info("################test_on_local_clients : ")

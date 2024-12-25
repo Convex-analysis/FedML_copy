@@ -26,6 +26,21 @@ def parse_json_file(json_file):
         data = json.load(f)
     return data
 
+def compare_models(model1, model2):
+    for p1, p2 in zip(model1.parameters(), model2.parameters()):
+        if not np.array_equal(p1.cpu().numpy(), p2.cpu().numpy()):
+            return False
+    return True
+
+def get_model_diff(model1, model2):
+        """
+        measure the difference from w_global and each group model
+        """
+        diff = 0
+        for p1, p2 in zip(model1.parameters(), model2.parameters()): 
+            diff += torch.sum(torch.abs(p1 - p2)).item() 
+        return diff
+
 
 # 利用这个traininer初始化所有的HFLtrainer，分配客户端和数据
 class MultiHierFLTrainer():
@@ -163,6 +178,19 @@ class MultiHierFLTrainer():
                 cloud.set_group_list(group_list)
                 cloud.set_group_indexes(group_list)
         logging.info("############_setup_groups_for_MHFL_from_file (END)#############")
+    
+    #只适应于1个federation
+    def _setup_groups_for_MHFL_from_profile(self):
+        logging.info("############_setup_groups_for_MHFL_from_profile (START)#############")
+        tmp_group_list = self.args.group_partition_profile
+        group_list = []
+        if len(self.federation_list) == 1:
+            cloud = self.federation_list[0]
+            for group_idx in tmp_group_list:
+                group_list.append(self.group_dict[group_idx])
+            cloud.set_group_list(group_list)
+            cloud.set_group_indexes(group_list)
+        logging.info("############_setup_groups_for_MHFL_from_profile (END)#############")
 
     def _setup_groups_for_MHFL_from_profile(self):
         logging.info("############_setup_groups_for_MHFL_from_profile (START)#############")
@@ -200,12 +228,24 @@ class MultiHierFLTrainer():
         logging.info("############setup_federations_for_MHFL (END)#############")
 
     def train(self):
-        tmp_cloud = []
+        tmp_cloud = None
+        flag = False
         cloud_train_stats_list = []
         logging.info("############Multi Federation Training (START)#############")
         for hfl in self.federation_list:
             logging.info("############Training Cloud {} (START)#############".format(hfl.idx))
             cloud_train_stats_list.append(hfl.train())
+            '''
+            if tmp_cloud != None:
+                flag = compare_models(tmp_cloud.model,hfl.model)
+            if flag:
+                logging.info("Cloud {} and Cloud {} have same parameters".format(hfl.idx, tmp_cloud.idx)) 
+            '''
+            if tmp_cloud != None:
+                tmp_difference = get_model_diff(tmp_cloud.model,hfl.model)
+                logging.info("Cloud {} and Cloud {} model differences is {}".format(hfl.idx, tmp_cloud.idx, tmp_difference)) 
+            tmp_cloud = hfl
+            
         logging.info("############Multi Federation Training (END)#############")
         # self.test_diff_vs_acc()
         logging.info("############Multi Federation Testing (START)#############")

@@ -1,4 +1,5 @@
 import copy
+import logging
 
 import torch
 import torch.nn as nn
@@ -43,15 +44,20 @@ class HFLClient(Client):
                 x, labels = x.to(self.device), labels.to(self.device)
                 self.model.zero_grad()
                 log_probs = self.model(x)
-                loss = self.criterion(log_probs, labels)  # pylint: disable=E1102
+                loss = self.criterion(log_probs, labels) 
+                #logging.info("client {} loss in epoch {} of group_round_idx {} of global_round_idx {} = {}".format(self.client_idx, epoch, group_round_idx, global_round_idx, loss))# pylint: disable=E1102
                 loss.backward()
                 optimizer.step()
             global_epoch = (
                 global_round_idx * self.args.group_comm_round * self.args.epochs
                 + group_round_idx * self.args.epochs
-                + epoch
+                + epoch + 1
             )
             if global_epoch % self.args.frequency_of_the_test == 0 or epoch == self.args.epochs - 1:
+                for name, param in self.model.named_parameters():
+                    has_nan = torch.isnan(param).any().item()
+                    if has_nan:
+                        logging.info("client {} model parameters in epoch {} of group_round_idx {} of global_round_idx {} = laryer {} NaN".format(self.client_idx, epoch, group_round_idx, global_round_idx,name))
                 w_list.append((global_epoch, copy.deepcopy(self.model.state_dict())))
         """
         w_tmp = w_list[0]
