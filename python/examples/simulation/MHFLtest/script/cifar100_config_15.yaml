@@ -1,0 +1,55 @@
+common_args:
+  training_type: "simulation"
+  random_seed: 0
+
+data_args:
+  dataset: "fed_cifar100"
+  data_cache_dir: ~/fedml_data
+  partition_method: "hetero"
+  partition_alpha: 0.1
+
+model_args:
+  model: "resnet34_cifar"
+
+train_args:
+  federated_optimizer: "Multi-HierFL"
+  client_id_list: "[]"
+  client_num_in_total: 200
+  client_num_per_round: 10
+  comm_round: 60
+  epochs: 5
+  batch_size: 10
+  client_optimizer: sgd
+  learning_rate: 0.03
+  weight_decay: 0.001
+  group_method: "random"
+  group_partition_type: "constant"
+  group_partition_file: "0To15.json"
+  group_participation_method: "random"
+  group_num: 10
+  group_comm_round: 5
+  federation_num : 16
+  lr: 0.03
+  #client selection method: RC denotes random client selection
+  method: "RC"
+  subset_ratio: 0.1
+
+validation_args:
+  frequency_of_the_test: 50
+
+device_args:
+  using_gpu: true
+  gpu_id: 0
+
+comm_args:
+  backend: "sp"
+  is_mobile: 0
+
+tracking_args:
+   # When running on MLOps platform(open.fedml.ai), the default log path is at ~/fedml-client/fedml/logs/ and ~/fedml-server/fedml/logs/
+  enable_wandb: False
+  wandb_key: 7afc5847eb7c7a114528be19d6950cc6cbb57a31
+  wandb_entity: xta_fl
+  wandb_project: simulation
+  run_name: CSG_auction
+  using_mlops: False

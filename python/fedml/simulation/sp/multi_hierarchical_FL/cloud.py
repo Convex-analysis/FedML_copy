@@ -13,13 +13,18 @@ from fedml import mlops
 from .group import Group
 from ..hierarchical_fl.trainer import HierarchicalTrainer
 
+
+
 def get_model_diff(model1, model2):
         """
         measure the difference from w_global and each group model
         """
         diff = 0
-        for p1, p2 in zip(model1.parameters(), model2.parameters()): 
-            diff += torch.sum(torch.abs(p1 - p2)).item() 
+        p1 = model1.state_dict()
+        p2 = model2.state_dict()
+        #calculate the difference between two models
+        for k1, k2 in zip(p1.keys(), p2.keys()):
+            diff += torch.norm(p1[k1].float() - p2[k2].float())
         return diff
 
 
@@ -408,6 +413,7 @@ class Cloud(HierarchicalTrainer):
         diff_list = []
         for idx, w_group in zip(train_order, w_groups):
             diff = 0
+            #skip the batchnorm layer when calculating the diff
             for k in w_global.keys():
                 #diff += torch.norm(w_global[k] - w_group[1][k])/torch.norm(w_global[k])
                 diff += torch.norm(w_global[k] - w_group[1][k])

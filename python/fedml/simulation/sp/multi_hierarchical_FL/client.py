@@ -41,11 +41,12 @@ class HFLClient(Client):
         w_list = []
         for epoch in range(self.args.epochs):
             for x, labels in self.local_training_data:
+                #Training
+                self.model.train()
                 x, labels = x.to(self.device), labels.to(self.device)
-                self.model.zero_grad()
-                log_probs = self.model(x)
-                loss = self.criterion(log_probs, labels) 
-                #logging.info("client {} loss in epoch {} of group_round_idx {} of global_round_idx {} = {}".format(self.client_idx, epoch, group_round_idx, global_round_idx, loss))# pylint: disable=E1102
+                optimizer.zero_grad()
+                outputs = self.model(x)
+                loss = self.criterion(outputs, labels)
                 loss.backward()
                 optimizer.step()
             global_epoch = (
@@ -71,8 +72,9 @@ class HFLClient(Client):
         return w_list
     def get_model(self):
         """
-        get current model
+        get a copy of current model
         """
+        self.model.to(torch.device("cpu"))
         self.model.eval()
         return self.model
 
